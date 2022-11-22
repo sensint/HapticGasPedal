@@ -97,6 +97,8 @@ AudioConnection patchCord2(signal, 0, dac, 1);
 float filtered_sensor_value = 0.f;
 
 //=========== control flow variables ===========
+static constexpr uint32_t kSendForceMaxDelayMs = 1000; // in milliseconds
+elapsedMillis send_force_delay_ms = 0;
 elapsedMicros pulse_time_us = 0;
 bool is_vibrating = false;
 uint16_t last_bin_id = 0;
@@ -216,6 +218,12 @@ void loop() {
       (1.f - sensor_settings.filter_weight) * filtered_sensor_value +
       sensor_settings.filter_weight * sensor_value;
   static uint16_t last_triggered_sensor_val = filtered_sensor_value;
+
+  // send the filtered value to the Unity application in a fixed update rate
+  if (send_force_delay_ms > kSendForceMaxDelayMs) {
+    Serial.print((int)filtered_sensor_value);
+    send_force_delay_ms = 0;    
+  }
 
   // calculate the bin id depending on the filtered sensor value
   // (currently linear mapping)
