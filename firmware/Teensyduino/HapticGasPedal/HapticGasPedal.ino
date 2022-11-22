@@ -1,5 +1,4 @@
 #include <Audio.h>
-#include <Wire.h>
 #include <cmath>
 
 
@@ -14,7 +13,6 @@ namespace defaults {
 /**
  * @brief Enumeration of waveforms that can be used for the signal generation.
  * The values are copied from the Teensy Audio Library.
- *
  */
 enum class Waveform : short {
   kSine = 0,
@@ -34,7 +32,7 @@ enum class Waveform : short {
 
 //=========== signal generator ===========
 static constexpr uint16_t kNumberOfBins = 20;
-static constexpr uint32_t kSignalDurationUs = 10000; // in microseconds considered changing to phase
+static constexpr uint32_t kSignalDurationUs = 10000; // in microseconds
 static constexpr short kSignalWaveform = static_cast<short>(Waveform::kSine);
 static constexpr float kSignalFreqencyHz = 150.f;
 static constexpr float kSignalAmp = 1.f;
@@ -42,70 +40,15 @@ static constexpr float kSignalAmp = 1.f;
 //=========== sensor ===========
 static constexpr uint8_t kAnalogSensingPin = A1;
 static constexpr float kFilterWeight = 0.05;
-static constexpr uint8_t kSensorResolution = 10;
+static constexpr uint8_t kSensorResolution = 24;
 static constexpr uint32_t kSensorMaxValue = (1U << kSensorResolution) - 1;
 static constexpr uint32_t kSensorMinValue = 0;
 static constexpr uint32_t kSensorJitterThreshold = 7; // increase value if vibration starts resonating too much
 
 //=========== serial ===========
 static constexpr int kBaudRate = 115200;
-
-//=========== I2C ===========
-static constexpr uint8_t kI2CAddress = 20;
-
-//=========== servo ===========
-static constexpr uint32_t kServoDelayMs = 20;
-static constexpr uint8_t kServoInputPin = 17;
 }  // namespace defaults
 
-namespace lut {
-static constexpr uint8_t kSize = 181;
-static constexpr uint8_t kMaxIndex = kSize - 1;
-
-/**
- * @brief Lookup table for the servo angle to number of bins conversion.
- * The values are created by the LUTgenerator (Processing) with the following
- * parameters: [ binMin: 10 binMax: 100 binLevels: 12]
- */
-static constexpr uint16_t kNumberOfBins[] = {
-    10,  10,  10,  10,  10,  10,  10,  10,  10,  10,  10,  10,  10,  10,
-    10,  18,  18,  18,  18,  18,  18,  18,  18,  18,  18,  18,  18,  18,
-    18,  18,  26,  26,  26,  26,  26,  26,  26,  26,  26,  26,  26,  26,
-    26,  26,  26,  35,  35,  35,  35,  35,  35,  35,  35,  35,  35,  35,
-    35,  35,  35,  35,  43,  43,  43,  43,  43,  43,  43,  43,  43,  43,
-    43,  43,  43,  43,  43,  51,  51,  51,  51,  51,  51,  51,  51,  51,
-    51,  51,  51,  51,  51,  51,  59,  59,  59,  59,  59,  59,  59,  59,
-    59,  59,  59,  59,  59,  59,  59,  67,  67,  67,  67,  67,  67,  67,
-    67,  67,  67,  67,  67,  67,  67,  67,  75,  75,  75,  75,  75,  75,
-    75,  75,  75,  75,  75,  75,  75,  75,  75,  84,  84,  84,  84,  84,
-    84,  84,  84,  84,  84,  84,  84,  84,  84,  84,  92,  92,  92,  92,
-    92,  92,  92,  92,  92,  92,  92,  92,  92,  92,  92,  100, 100, 100,
-    100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100};
-
-/**
- * @brief Lookup table for the servo angle to frequency conversion.
- * The values are created by the LUTgenerator (Processing) with the following
- * parameters: [ freqMin: 10.0 freqMax: 300.0 freqLevels: 8]
- */
-static constexpr float kFrequencies[] = {
-    10.0,  10.0,  51.0,  51.0,  93.0,  93.0,  134.0, 134.0, 176.0, 176.0, 217.0,
-    217.0, 259.0, 259.0, 300.0, 10.0,  51.0,  51.0,  93.0,  93.0,  134.0, 134.0,
-    176.0, 176.0, 217.0, 217.0, 259.0, 259.0, 300.0, 300.0, 10.0,  10.0,  51.0,
-    51.0,  93.0,  93.0,  134.0, 134.0, 176.0, 176.0, 217.0, 217.0, 259.0, 259.0,
-    300.0, 10.0,  51.0,  51.0,  93.0,  93.0,  134.0, 134.0, 176.0, 176.0, 217.0,
-    217.0, 259.0, 259.0, 300.0, 300.0, 10.0,  10.0,  51.0,  51.0,  93.0,  93.0,
-    134.0, 134.0, 176.0, 176.0, 217.0, 217.0, 259.0, 259.0, 300.0, 10.0,  51.0,
-    51.0,  93.0,  93.0,  134.0, 134.0, 176.0, 176.0, 217.0, 217.0, 259.0, 259.0,
-    300.0, 300.0, 10.0,  10.0,  51.0,  51.0,  93.0,  93.0,  134.0, 134.0, 176.0,
-    176.0, 217.0, 217.0, 259.0, 259.0, 300.0, 10.0,  51.0,  51.0,  93.0,  93.0,
-    134.0, 134.0, 176.0, 176.0, 217.0, 217.0, 259.0, 259.0, 300.0, 300.0, 10.0,
-    10.0,  51.0,  51.0,  93.0,  93.0,  134.0, 134.0, 176.0, 176.0, 217.0, 217.0,
-    259.0, 259.0, 300.0, 10.0,  51.0,  51.0,  93.0,  93.0,  134.0, 134.0, 176.0,
-    176.0, 217.0, 217.0, 259.0, 259.0, 300.0, 300.0, 10.0,  10.0,  51.0,  51.0,
-    93.0,  93.0,  134.0, 134.0, 176.0, 176.0, 217.0, 217.0, 259.0, 259.0, 300.0,
-    10.0,  51.0,  51.0,  93.0,  93.0,  134.0, 134.0, 176.0, 176.0, 217.0, 217.0,
-    259.0, 259.0, 300.0, 300.0, 10.0};
-}  // namespace lut
 
 namespace {
 
@@ -118,6 +61,7 @@ typedef struct {
   uint8_t resolution = defaults::kSensorResolution;
   uint32_t max_value = defaults::kSensorMaxValue;
   uint32_t min_value = defaults::kSensorMinValue;
+  bool run_calibration = false;
 } SensorSettings;
 
 /**
@@ -157,16 +101,6 @@ elapsedMicros pulse_time_us = 0;
 bool is_vibrating = false;
 uint16_t last_bin_id = 0;
 
-//=========== servo variables ===========
-static constexpr int kMinServoPulseLength = 544;
-static constexpr int kMaxServoPulseLength = 2400;
-static constexpr int kMinServoAngle = 0;
-static constexpr int kMaxServoAngle = 180;
-elapsedMillis servo_timer_ms = 0;
-volatile uint32_t servo_pulse_length = 0;
-volatile bool is_new_servo_pulse = false;
-uint8_t servo_angle = 0;
-uint8_t last_servo_angle = 255;
 
 //=========== helper functions ===========
 // These functions were extracted to simplify the control flow and will be
@@ -174,15 +108,7 @@ uint8_t last_servo_angle = 255;
 inline void SetupSerial() __attribute__((always_inline));
 inline void SetupAudio() __attribute__((always_inline));
 inline void SetupSensor() __attribute__((always_inline));
-inline void SetupI2C() __attribute__((always_inline));
-inline void SetupServo() __attribute__((always_inline));
-inline void StartPulse() __attribute__((always_inline));
-inline void StopPulse() __attribute__((always_inline));
-inline void HandleServoPulse() __attribute__((always_inline));
-inline void ApplyHardwareFix() __attribute__((always_inline));
-void ServoPinChangingEdge();
-void UpdateSettingsFromLUTs(uint8_t index);
-void HandleI2COnReceive(int number_of_bytes);
+inline void CalibrateSensor() __attribute__((always_inline));
 
 void SetupSerial() {
   while (!Serial && millis() < 5000)
@@ -192,7 +118,6 @@ void SetupSerial() {
 
 /**
  * @brief set up the audio system
- *
  */
 void SetupAudio() {
   AudioMemory(20);
@@ -202,38 +127,22 @@ void SetupAudio() {
 }
 
 void SetupSensor() {
-  pinMode(defaults::kAnalogSensingPin, INPUT);
-  
-  analogReadRes(sensor_settings.resolution);
-#ifdef DEBUG
-  Serial.printf(">>> Set up analog sensor \n\t pin: %d \n\t res: %d bit \n\t range: [%d, %d]\n",
-                (int)defaults::kAnalogSensingPin,
-                (int)sensor_settings.resolution,
-                (int)sensor_settings.min_value,
-                (int)sensor_settings.max_value);
-#endif
+  // initialize load cell (e.g., library object)
 }
 
-void SetupI2C() {
-  Wire.begin(defaults::kI2CAddress);
-  Wire.onReceive(HandleI2COnReceive);
-#ifdef DEBUG
-  Serial.printf(">>> Set up I2C \n\t addr: %d \n", (int)defaults::kI2CAddress);
-#endif
-}
+void CalibrateSensor() {
+  // load previous values from EEPROM
+  // get the readings  
+  // do the math
+  // store the updated value(s) to EEPROM
+  // do more fancy things here :)
 
-void SetupServo() {
-  pinMode(defaults::kServoInputPin, INPUT_PULLUP);
-  attachInterrupt(defaults::kServoInputPin, ServoPinChangingEdge, CHANGE);
-#ifdef DEBUG
-  Serial.printf(">>> Set up servo \n\t pin: %d \n", (int)defaults::kServoInputPin);
-#endif
+  sensor_settings.run_calibration = false;
 }
 
 /**
  * @brief start a pulse by setting the amplitude of the signal to a predefined
  * value
- *
  */
 void StartPulse() {
   signal.begin(signal_generator_settings.waveform);
@@ -253,7 +162,6 @@ void StartPulse() {
 
 /**
  * @brief stop the pulse by setting the amplitude of the signal to zero
- *
  */
 void StopPulse() {
   signal.amplitude(0.f);
@@ -262,72 +170,6 @@ void StopPulse() {
   Serial.println(F(">>> Stop pulse"));
 #endif
 }
-
-void ServoPinChangingEdge() {
-  if (digitalReadFast(defaults::kServoInputPin)) {
-    is_new_servo_pulse = false;
-    servo_pulse_length = micros();
-  } else {
-    servo_pulse_length = micros() - servo_pulse_length;
-    is_new_servo_pulse = true;
-  }
-}
-
-void HandleServoPulse() {
-  if (servo_pulse_length >= kMinServoPulseLength &&
-      servo_pulse_length <= kMaxServoPulseLength) {
-    servo_angle = (uint8_t)map(servo_pulse_length, kMinServoPulseLength,
-                    kMaxServoPulseLength, kMinServoAngle, kMaxServoAngle);
-    if (servo_angle != last_servo_angle) {
-#ifdef DEBUG
-      Serial.printf(">>> New servo angle \n\t angle: %d \n", (int)servo_angle);
-#endif
-      UpdateSettingsFromLUTs(servo_angle);
-      last_servo_angle = servo_angle;
-    }
-  }
-}
-
-/**
- * @brief selects a set of parameters for the signal generator from a set of
- * lookup tables. The lookup tables are defined in the lut namespace. To follow
- * the servo logic, we define each lookup table as an array values in the range
- * [0, 180].
- *
- */
-void UpdateSettingsFromLUTs(uint8_t index) {
-  if (index > lut::kMaxIndex) {
-    index = lut::kMaxIndex;
-  }
-  signal_generator_settings.number_of_bins = lut::kNumberOfBins[index];
-  signal_generator_settings.frequency_hz = lut::kFrequencies[index];
-#ifdef DEBUG
-  Serial.printf(">>> Update settings from LUTs \n\t number of bins: %d \n\t frequency: %.2f \n", 
-                (int) signal_generator_settings.number_of_bins,
-                signal_generator_settings.frequency_hz);
-#endif
-}
-
-
-void HandleI2COnReceive(int number_of_bytes) {
-  int idx = 0;
-  while (Wire.available()) {
-    signal_generator_settings_serialized.serialized[idx] = Wire.read();
-    idx++;
-  }
-  if (idx == (sizeof(SignalGeneratorSettings)-1)) {
-    signal_generator_settings = signal_generator_settings_serialized.data;
-  }
-}
-
-//! This should be removed for the next PCB version!
-void ApplyHardwareFix() {
-  pinMode(A2,OUTPUT);
-  digitalWrite(A2, HIGH);
-  pinMode(2,OUTPUT);
-  digitalWrite(2, LOW);
-}
-
 }  // namespace
 
 void setup() {
@@ -338,17 +180,8 @@ void setup() {
   Serial.println(F("======================= SETUP ======================="));
 #endif
 
-  SetupI2C();
   SetupAudio();
   SetupSensor();
-  SetupServo();
-
-  //! This should be removed for the next PCB version!
-  ApplyHardwareFix();
-
-  // initialize the system assuming the servo being at 0°
-  //signal_generator_settings.number_of_bins = lut::kNumberOfBins[0];
-  //signal_generator_settings.frequency_hz = lut::kFrequencies[0];
 
 #ifdef DEBUG
   Serial.printf(">>> Signal generator settings \n\t bins: %d \n\t wave: %d \n\t amp: %.2f \n\t freq: %.2f Hz \n\t dur: %d µs\n",
@@ -366,22 +199,19 @@ void setup() {
 
 
 void loop() {
-  //! This is for testing only!
-  /*
-  static elapsedMillis servo_test_timer = 0;
-  if (servo_test_timer > 2000) {
-    static uint8_t test_angle = 0;
-    UpdateSettingsFromLUTs((test_angle++)%180);
-    servo_test_timer = 0;
+  if (Serial.available()) {
+    // check if 'c' is received (means 'do calibration')
+    auto serial_c = (char)Serial.read();
+    sensor_settings.run_calibration = (serial_c == 'c');
   }
-  */
-  
-  if (is_new_servo_pulse && servo_timer_ms > defaults::kServoDelayMs) {
-    HandleServoPulse();
-    servo_timer_ms = 0;
+
+  if (sensor_settings.run_calibration) {
+    CalibrateSensor();
   }
-  
+
+  // replace the following line with the load cell reading
   auto sensor_value = analogRead(defaults::kAnalogSensingPin);
+  
   filtered_sensor_value =
       (1.f - sensor_settings.filter_weight) * filtered_sensor_value +
       sensor_settings.filter_weight * sensor_value;
