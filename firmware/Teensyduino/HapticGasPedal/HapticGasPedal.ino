@@ -1,5 +1,8 @@
-#include <Audio.h>
 #include <cmath>
+#include <Audio.h>
+
+// Please install the HX711 library by Rob Tillaart (https://github.com/RobTillaart/HX711)
+#include <HX711.h>
 
 
 #define VERSION "v1.0.0"
@@ -38,12 +41,13 @@ static constexpr float kSignalFreqencyHz = 150.f;
 static constexpr float kSignalAmp = 1.f;
 
 //=========== sensor ===========
-static constexpr uint8_t kAnalogSensingPin = A1;
+static constexpr uint8_t kSensorClockPin = 24;
+static constexpr uint8_t kSensorDataPin = 25;
 static constexpr float kFilterWeight = 0.05;
-static constexpr uint8_t kSensorResolution = 24;
-static constexpr uint32_t kSensorMaxValue = (1U << kSensorResolution) - 1;
+static constexpr uint32_t kSensorMaxValue = 20000; // in grams for a 20kg loadcell 
 static constexpr uint32_t kSensorMinValue = 0;
 static constexpr uint32_t kSensorJitterThreshold = 7; // increase value if vibration starts resonating too much
+static constexpr uint32_t kSendSensorDataMaxDelayMs = 100; // in milliseconds
 
 //=========== serial ===========
 static constexpr int kBaudRate = 115200;
@@ -54,19 +58,16 @@ namespace {
 
 /**
  * @brief a struct to hold the settings of the sensor.
- *
  */
 typedef struct {
   float filter_weight = defaults::kFilterWeight;
-  uint8_t resolution = defaults::kSensorResolution;
   uint32_t max_value = defaults::kSensorMaxValue;
   uint32_t min_value = defaults::kSensorMinValue;
-  bool run_calibration = false;
+  uint32_t send_data_delay = defaults::kSendSensorDataMaxDelayMs;
 } SensorSettings;
 
 /**
  * @brief a struct to hold the settings for the signal generator.
- *
  */
 typedef struct {
   uint16_t number_of_bins = defaults::kNumberOfBins;
@@ -76,16 +77,11 @@ typedef struct {
   float amp = defaults::kSignalAmp;
 } SignalGeneratorSettings;
 
-union SerializableSignalGeneratorSettings {
-  SignalGeneratorSettings data;
-  uint8_t serialized[sizeof(SignalGeneratorSettings)];
-};
 
 //=========== settings instances ===========
 // These instances are used to access the settings in the main code.
 SensorSettings sensor_settings;
 SignalGeneratorSettings signal_generator_settings;
-union SerializableSignalGeneratorSettings signal_generator_settings_serialized = { .data = signal_generator_settings };
 
 //=========== audio variables ===========
 AudioSynthWaveform signal;
@@ -94,14 +90,18 @@ AudioConnection patchCord1(signal, 0, dac, 0);
 AudioConnection patchCord2(signal, 0, dac, 1);
 
 //=========== sensor variables ===========
+HX711 sensor;
 float filtered_sensor_value = 0.f;
+float last_triggered_sensor_val = 0.f;
 
 //=========== control flow variables ===========
-static constexpr uint32_t kSendForceMaxDelayMs = 1000; // in milliseconds
-elapsedMillis send_force_delay_ms = 0;
+elapsedMillis send_sensor_data_delay_ms = 0;
 elapsedMicros pulse_time_us = 0;
 bool is_vibrating = false;
+uint16_t mapped_bin_id = 0;
 uint16_t last_bin_id = 0;
+bool augmentation_enabled = false;
+bool recording_enabled = false;
 
 
 //=========== helper functions ===========
@@ -118,9 +118,6 @@ void SetupSerial() {
   Serial.begin(defaults::kBaudRate);
 }
 
-/**
- * @brief set up the audio system
- */
 void SetupAudio() {
   AudioMemory(20);
   delay(50);  // time for DAC voltage stable
@@ -129,17 +126,37 @@ void SetupAudio() {
 }
 
 void SetupSensor() {
-  // initialize load cell (e.g., library object)
+#ifdef DEBUG
+  Serial.print(F("HX711 library version: "));
+  Serial.println(HX711_LIB_VERSION);
+#endif
+  sensor.begin(defaults::kSensorDataPin, defaults::kSensorClockPin);
+  delay(10);
+  // this was taken from HX_set_mode.ino example for a 20kg loadcell
+  // sensor.set_scale(127.15);
+  // 
+  // sensor.set_raw_mode();
+  // delay(10);
 }
 
 void CalibrateSensor() {
-  // load previous values from EEPROM
-  // get the readings  
-  // do the math
-  // store the updated value(s) to EEPROM
-  // do more fancy things here :)
-
-  sensor_settings.run_calibration = false;
+#ifdef DEBUG
+  Serial.printf("HX711 units (before calibration): %f\n", sensor.get_units(10));
+  Serial.printf(F("clear the loadcell from any weight\n"));
+#endif
+  // you have 10 seconds to unload the cell
+  delay(10000);
+  sensor.tare();
+#ifdef DEBUG
+  Serial.printf("HX711 units (after tare): %f\n", sensor.get_units(10));
+  Serial.printf(F("place a 1kg weight on the loadcell\n"));
+#endif
+  // you have 10 seconds to load the cell with 1kg
+  delay(10000);
+  sensor.calibrate_scale(1000, 5);
+#ifdef DEBUG
+  Serial.printf("HX711 units (after calibration): %f\n", sensor.get_units(10));
+#endif
 }
 
 /**
@@ -178,7 +195,7 @@ void setup() {
   SetupSerial();
   
 #ifdef DEBUG
-  Serial.printf("HAPTIC SERVO (%s)\n\n", VERSION);
+  Serial.printf("HAPTIC GAS PEDAL (%s)\n\n", VERSION);
   Serial.println(F("======================= SETUP ======================="));
 #endif
 
@@ -201,42 +218,60 @@ void setup() {
 
 
 void loop() {
+  delay(1);
   if (Serial.available()) {
     // check if 'c' is received (means 'do calibration')
     auto serial_c = (char)Serial.read();
-    sensor_settings.run_calibration = (serial_c == 'c');
+    switch (serial_c) {
+      case 'c': CalibrateSensor();
+      break;
+      case 't': sensor.tare();
+      break;
+      case 'a': augmentation_enabled = !augmentation_enabled;
+      break;
+      case 'r': recording_enabled = !recording_enabled;
+      break;
+    }
   }
 
-  if (sensor_settings.run_calibration) {
-    CalibrateSensor();
-  }
+  // once the load cell is ready to be read, we calculate the current bin
+  if (sensor.is_ready()) {
+    // this will use units, i.e. grams
+    auto sensor_value = sensor.get_units(1);
+    // this will use raw XX-bit sensor data
+    // auto sensor_value = sensor.get_value(1);
+    filtered_sensor_value =
+        (1.f - sensor_settings.filter_weight) * filtered_sensor_value +
+        sensor_settings.filter_weight * sensor_value;
 
-  // replace the following line with the load cell reading
-  auto sensor_value = analogRead(defaults::kAnalogSensingPin);
-  
-  filtered_sensor_value =
-      (1.f - sensor_settings.filter_weight) * filtered_sensor_value +
-      sensor_settings.filter_weight * sensor_value;
-  static uint16_t last_triggered_sensor_val = filtered_sensor_value;
+    // calculate the bin id depending on the filtered sensor value
+    // (currently linear mapping)
+    mapped_bin_id = map(filtered_sensor_value,
+                        sensor_settings.min_value, sensor_settings.max_value,
+                        0, signal_generator_settings.number_of_bins);
+  }
 
   // send the filtered value to the Unity application in a fixed update rate
-  if (send_force_delay_ms > kSendForceMaxDelayMs) {
-    Serial.print((int)filtered_sensor_value);
-    send_force_delay_ms = 0;    
+  if (recording_enabled && send_sensor_data_delay_ms > sensor_settings.send_data_delay) {
+    Serial.println((int)filtered_sensor_value);
+    send_sensor_data_delay_ms = 0;    
   }
 
-  // calculate the bin id depending on the filtered sensor value
-  // (currently linear mapping)
-  uint16_t mapped_bin_id = map(filtered_sensor_value, sensor_settings.min_value,
-                               sensor_settings.max_value, 0,
-                               signal_generator_settings.number_of_bins);
+  // NOTE: If augmentation is disabled, no code below this line will be executed.
+  if (!augmentation_enabled) {
+    if (is_vibrating) {
+      StopPulse();
+      delay(1);
+    }
+    return;
+  }
+
+  // auto dist = std::abs((uint32_t)(filtered_sensor_value - last_triggered_sensor_val));
+  // if (dist < defaults::kSensorJitterThreshold) {
+  //     return;
+  // }
   
   if (mapped_bin_id != last_bin_id) {
-    auto dist = std::abs(filtered_sensor_value - last_triggered_sensor_val);
-    if (dist < defaults::kSensorJitterThreshold) {
-       return;
-    }
-    
     if (is_vibrating) {
 #ifdef DEBUG
       Serial.println(F(">>> Stop pulse before it finished"));
