@@ -177,7 +177,7 @@ void CalibrateSensorRange() {
 
   sensor_settings.max_value = sensor.get_units(10);
 #ifdef DEBUG
-  Serial.printf("max. value : %f\n", (int)sensor_settings.max_value);
+  Serial.printf("max. value : %i\n", (int)sensor_settings.max_value);
 #endif
 }
 
