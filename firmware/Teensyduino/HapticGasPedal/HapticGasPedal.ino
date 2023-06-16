@@ -159,6 +159,28 @@ void CalibrateSensor() {
 #endif
 }
 
+void CalibrateSensorRange() {
+#ifdef DEBUG
+  Serial.printf("HX711 units (before calibration): %f\n", sensor.get_units(10));
+  Serial.printf(F("clear the loadcell from any weight\n"));
+#endif
+  // you have 10 seconds to unload the cell
+  delay(10000);
+  sensor.tare();
+  sensor_settings.min_value = sensor.get_units(10);
+#ifdef DEBUG
+  Serial.printf("min value (after tare): %i\n", (int)sensor_settings.min_value);
+  Serial.printf(F("place the max. allowed weight on the loadcell\n"));
+#endif
+  // you have 10 seconds to load the cell with 1kg
+  delay(10000);
+
+  sensor_settings.max_value = sensor.get_units(10);
+#ifdef DEBUG
+  Serial.printf("max. value : %f\n", (int)sensor_settings.max_value);
+#endif
+}
+
 /**
  * @brief start a pulse by setting the amplitude of the signal to a predefined
  * value
@@ -224,6 +246,8 @@ void loop() {
     auto serial_c = (char)Serial.read();
     switch (serial_c) {
       case 'c': CalibrateSensor();
+      break;
+      case 's': CalibrateSensorRange();
       break;
       case 't': sensor.tare();
       break;
