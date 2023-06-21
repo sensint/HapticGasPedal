@@ -4,6 +4,12 @@
 // Please install the HX711 library by Rob Tillaart (https://github.com/RobTillaart/HX711)
 #include <HX711.h>
 
+// How to use:
+// First calibrate (c), (Once per participant/ reboot of the system)
+// then sensorCalibration (s), for setting the sensor range (max force by the user)
+// then tare (t), (Once per trial - sets the load cell to 0)
+// then read (r), (to record/ print sensor values) - toggle
+// then augmnentation (a), (to augment/ stop augmentation) - toggle
 
 #define VERSION "v1.0.0"
 
@@ -43,11 +49,11 @@ static constexpr float kSignalAmp = 1.f;
 //=========== sensor ===========
 static constexpr uint8_t kSensorClockPin = 24;
 static constexpr uint8_t kSensorDataPin = 25;
-static constexpr float kFilterWeight = 0.05;
+static constexpr float kFilterWeight = 0.1;
 static constexpr uint32_t kSensorMaxValue = 20000; // in grams for a 20kg loadcell 
 static constexpr uint32_t kSensorMinValue = 0;
 static constexpr uint32_t kSensorJitterThreshold = 7; // increase value if vibration starts resonating too much
-static constexpr uint32_t kSendSensorDataMaxDelayMs = 100; // in milliseconds
+static constexpr uint32_t kSendSensorDataMaxDelayMs = 30; // in milliseconds
 
 //=========== serial ===========
 static constexpr int kBaudRate = 115200;
@@ -177,7 +183,7 @@ void CalibrateSensorRange() {
 
   sensor_settings.max_value = sensor.get_units(10);
 #ifdef DEBUG
-  Serial.printf("max. value : %f\n", (int)sensor_settings.max_value);
+  Serial.printf("max. value : %i\n", (int)sensor_settings.max_value);
 #endif
 }
 
