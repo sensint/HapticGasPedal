@@ -8,7 +8,7 @@ import processing.serial.*;
 // ====================== Defaults =============================
 int loadCellValMin = 0;
 int loadCellValMax = 600; // Max Load Cell Value (Displayed at the bottom)
-int recordInterval = 50;
+int recordInterval = 30;
 int baudRate = 115200;
 
 // ====================== GUI Controls =============================
@@ -58,10 +58,10 @@ float playerY;
 float playerSize = 150;
 color playerColor = color(0, 0, 255); // Blue
 float playerSpeed = 5;
-float velocityMultiplier = 0.05; // Adjust this value to control the velocity sensitivity
+float velocityMultiplier = 0.005; // Adjust this value to control the velocity sensitivity
 
 boolean gameActive = true;
-int timerDuration = 20 * 1000; // 30 seconds
+int timerDuration = 30 * 1000; // 30 seconds
 int startTime;
 int currentTrial = 0;
 int maxTrials = 3;
@@ -75,7 +75,8 @@ ArrayList<Float> samples;
 int sampleRate = 30; // Number of samples per second
 int sampleInterval = 1000 / sampleRate; // Interval between samples in milliseconds
 int lastSampleTime;
-PrintWriter csvWriter;
+//PrintWriter csvWriter;
+Table savedData;
 
 void settings() {
   int windowWidth = displayWidth / 3;
@@ -91,9 +92,6 @@ void setup() {
 
   textAlign(LEFT, TOP);
 
-  // Code to select the sequence of pedals (Or just type the sequence of the pedals)
-  // The difficulty of the trial should be pre-programmed.
-
   String[] portList = Serial.list();
   if (portList.length > 0) {
     String portName = portList[0];
@@ -102,13 +100,7 @@ void setup() {
       println("Serial port connected: " + portName);
       isSerialAvailable = true;
 
-      // ================== Create CSV file =====================
-      String filename = "load_cell_data.csv";
-      csvWriter = createWriter(filename);
-      csvWriter.println("Sample Time (ms), Load Cell Value, Target Value"); // Write header to the CSV file 
-
       resetGame();    // Initialize the game
-      startTime = millis(); // Start the timer
     }
     catch (Exception e) {
       println("Failed to connect to serial port: " + portName);
@@ -116,6 +108,11 @@ void setup() {
   } else {
     println("No serial ports available.");
   }
+
+  savedData = new Table();
+  savedData.addColumn("Time");
+  savedData.addColumn("User");
+  savedData.addColumn("Target");
 }
 
 
@@ -125,7 +122,6 @@ void draw() {
   textAlign(CENTER, BOTTOM);
 
   if (isSerialAvailable) {
-
     if (isFirstScreen) {
       // First Screen - Participant ID
       textSize(25);
@@ -138,7 +134,6 @@ void draw() {
       fill(playerColor);
       text("Please fill the questionnaire", width / 2, height / 2 - 250);
     } else if (isThirdScreen) {
-      // Second Screen - Pedal Type
       text("Click to start the first trial", width / 2, height / 2);
     } else if (isMainTrial) {   
 
@@ -149,23 +144,21 @@ void draw() {
       line(width / 2 - 200, height - 300, width / 2 + 200, height - 300);
       stroke(10);
       line(width / 2 - 200, -targetSize / 2 + 100, width / 2 + 200, -targetSize / 2 + 100);
+      
+      String filename = "P" + participantID + "_" + buttonPressed + "_" + (runCounter + 1) + ".csv";
 
       String data = teensyPort.readStringUntil('\n');
       if (data != null) {
         data = trim(data);
         loadCellValue = int(data);
-        // the mapping should come here
-        playerSpeed = map(loadCellValue, 0, 1023, height/2, 0) * velocityMultiplier;
+        playerSpeed = map(loadCellValue, 0, 1023, height, 0) * velocityMultiplier; // Feed the maximum value of the calibrate_sensor_range from
       }
-
-      // Write the sample to the CSV file
-      csvWriter.println(millis() + "," + loadCellValue);
 
       // Display the current loadCellValue and number of samples
       fill(0);
       textSize(18);
       textAlign(LEFT, TOP);
-      text("Load Cell Value: " + loadCellValue, 10, 10);
+      text("Speed: " + playerSpeed, 20, 20);
 
       if (gameActive) {
         // Update player position
@@ -176,6 +169,13 @@ void draw() {
         //    playerY += playerSpeed;
         //  }
         //}
+
+        TableRow newRow = savedData.addRow();
+        newRow.setInt("Time", (millis()-startTime));
+        newRow.setFloat("User", playerY);
+        newRow.setFloat("Target", targetY);
+
+        saveTable(savedData, filename);
 
         playerY += playerSpeed; // uncomment this when there is a continuous stream of data from the microcontroller.
 
@@ -190,11 +190,11 @@ void draw() {
         } 
 
         // Wrap the player's position around the screen
-        //if (targetY < -targetSize / 2 || targetY > height + 200) {
-        //  targetY = targetY + targetSpeed * direction;
-        //  direction *= -1;
-        //  resetTargetSpeed();
-        //}
+        if (playerY < -50 / 2 + 150 || playerY > height - 300) {
+          //playerY = playerY + playerSpeed * direction;
+          //direction *= -1;
+          resetPlayerSpeed();
+        }
 
         // Draw target
         fill(targetColor);
@@ -213,6 +213,7 @@ void draw() {
         // Check if the time is up
         if (millis() - startTime >= timerDuration) {
           gameActive = false;
+          println("CSV saved successfully.");
         }
       } else {
         // Trial over
@@ -222,6 +223,10 @@ void draw() {
         text("Trial Over", width / 2, height / 2 - 50);
         text("Click to proceed to the next trial", width / 2, height / 2 + 50);
         textSize(20);
+        savedData = new Table();
+        savedData.addColumn("Time");
+        savedData.addColumn("User");
+        savedData.addColumn("Target");
       }
     }
   } else {
@@ -264,6 +269,7 @@ void resetGame() {
   targetY = random(targetSize / 2, height - targetSize / 2);
 
   resetTargetSpeed();
+  resetPlayerSpeed();
 
   gameActive = true;
   startTime = millis(); // Restart the timer
@@ -274,18 +280,14 @@ void resetTargetSpeed() {
   targetSpeed = random(targetSpeedMin, targetSpeedMax) * (random(0, 1) > 0.5 ? 1 : -1);
 }
 
+void resetPlayerSpeed() {
+  playerSpeed = 0;
+}
+
 void keyPressed() {
   if (keyCode == ENTER) {
     resetGame(); // Reset game when Enter key is pressed
   }
-
-  if (key == 's' || key == 'S') {
-    // Save and close the CSV file
-    csvWriter.flush();
-    csvWriter.close();
-    println("CSV file saved successfully.");
-  }
-
   if (isFirstScreen) {
     // Participant ID input
     if (keyCode == BACKSPACE && participantID.length() > 0) {
@@ -318,6 +320,7 @@ void mousePressed() {
   } else if (isThirdScreen) {
     isThirdScreen = false;
     isMainTrial = true;
+    resetGame();
   } else if (isMainTrial) {
     runCounter++;
     if (runCounter >= 3) {
