@@ -1,15 +1,8 @@
 #include <cmath>
+
 #include <Audio.h>
-
-// Please install the HX711 library by Rob Tillaart (https://github.com/RobTillaart/HX711)
-#include <HX711.h>
-
-// How to use:
-// First calibrate (c), (Once per participant/ reboot of the system)
-// then sensorCalibration (s), for setting the sensor range (max force by the user)
-// then tare (t), (Once per trial - sets the load cell to 0)
-// then read (r), (to record/ print sensor values) - toggle
-// then augmnentation (a), (to augment/ stop augmentation) - toggle
+#include <EEPROM.h>
+#include <HX711.h> // install the HX711 library by Rob Tillaart (https://github.com/RobTillaart/HX711)
 
 #define VERSION "v1.0.0"
 
@@ -49,11 +42,19 @@ static constexpr float kSignalAmp = 1.f;
 //=========== sensor ===========
 static constexpr uint8_t kSensorClockPin = 24;
 static constexpr uint8_t kSensorDataPin = 25;
-static constexpr float kFilterWeight = 0.1;
-static constexpr uint32_t kSensorMaxValue = 20000; // in grams for a 20kg loadcell 
-static constexpr uint32_t kSensorMinValue = 0;
+static constexpr float kFilterWeight = 0.7;
+static constexpr float kSensorScale = 1.f;  // will be overwritten from EEPROM
+static constexpr uint32_t kSensorMinValue = 0; // in grams - will be overwritten from EEPROM
+static constexpr uint32_t kSensorMaxValue = 20000; // in grams - will be overwritten from EEPROM
 static constexpr uint32_t kSensorJitterThreshold = 7; // increase value if vibration starts resonating too much
 static constexpr uint32_t kSendSensorDataMaxDelayMs = 30; // in milliseconds
+static constexpr uint32_t kCalibrationDelayMs = 5000; // in milliseconds
+static constexpr uint16_t kCalibrationWeight = 100; // in grams - set to value of your known weight
+
+//=========== EEPROM ===========
+static constexpr int kEEPROMSensorScaleAddress = 0; // holds a 32 bit (4 byte) float
+static constexpr int kEEPROMSensorMinValueAddress = 4; // holds a 32 bit (4 byte) uint32_t
+static constexpr int kEEPROMSensorMaxValueAddress = 8; // holds a 32 bit (4 byte) uint32_t
 
 //=========== serial ===========
 static constexpr int kBaudRate = 115200;
@@ -67,9 +68,12 @@ namespace {
  */
 typedef struct {
   float filter_weight = defaults::kFilterWeight;
-  uint32_t max_value = defaults::kSensorMaxValue;
+  float scale = defaults::kSensorScale;
   uint32_t min_value = defaults::kSensorMinValue;
+  uint32_t max_value = defaults::kSensorMaxValue;
   uint32_t send_data_delay = defaults::kSendSensorDataMaxDelayMs;
+  uint32_t calibration_delay = defaults::kCalibrationDelayMs;
+  uint16_t calibration_weight = defaults::kCalibrationWeight;
 } SensorSettings;
 
 /**
@@ -138,11 +142,16 @@ void SetupSensor() {
 #endif
   sensor.begin(defaults::kSensorDataPin, defaults::kSensorClockPin);
   delay(10);
-  // this was taken from HX_set_mode.ino example for a 20kg loadcell
-  // sensor.set_scale(127.15);
-  // 
-  // sensor.set_raw_mode();
-  // delay(10);
+  EEPROM.get(defaults::kEEPROMSensorScaleAddress, sensor_settings.scale);
+  EEPROM.get(defaults::kEEPROMSensorMinValueAddress, sensor_settings.min_value);
+  EEPROM.get(defaults::kEEPROMSensorMaxValueAddress, sensor_settings.max_value);
+  sensor.set_scale(sensor_settings.scale);
+#ifdef DEBUG
+  Serial.printf(">>> initial values from EEPROM:\n\t scale=%f\n\t min=%d\n\t max=%d\n",
+                sensor_settings.scale,
+                (int)sensor_settings.min_value,
+                (int)sensor_settings.max_value);
+#endif
 }
 
 void CalibrateSensor() {
@@ -150,18 +159,21 @@ void CalibrateSensor() {
   Serial.printf("HX711 units (before calibration): %f\n", sensor.get_units(10));
   Serial.printf(F("clear the loadcell from any weight\n"));
 #endif
-  // you have 10 seconds to unload the cell
-  delay(10000);
+  // you have some time to unload the cell
+  delay(sensor_settings.calibration_delay);
   sensor.tare();
 #ifdef DEBUG
   Serial.printf("HX711 units (after tare): %f\n", sensor.get_units(10));
-  Serial.printf(F("place a 1kg weight on the loadcell\n"));
+  Serial.printf(F("place a calibration weight on the loadcell\n"));
 #endif
-  // you have 10 seconds to load the cell with 1kg
-  delay(10000);
-  sensor.calibrate_scale(1000, 5);
+  // you have some time to load the cell with the calibration weight
+  delay(sensor_settings.calibration_delay);
+  sensor.calibrate_scale(sensor_settings.calibration_weight, 5);
+  sensor_settings.scale = sensor.get_scale();
+  EEPROM.put(defaults::kEEPROMSensorScaleAddress, sensor_settings.scale);
 #ifdef DEBUG
   Serial.printf("HX711 units (after calibration): %f\n", sensor.get_units(10));
+  Serial.printf("HX711 scale (after calibration): %f\n", sensor_settings.scale);
 #endif
 }
 
@@ -170,18 +182,19 @@ void CalibrateSensorRange() {
   Serial.printf("HX711 units (before calibration): %f\n", sensor.get_units(10));
   Serial.printf(F("clear the loadcell from any weight\n"));
 #endif
-  // you have 10 seconds to unload the cell
-  delay(10000);
+  // you have some time to unload the cell
+  delay(sensor_settings.calibration_delay);
   sensor.tare();
   sensor_settings.min_value = sensor.get_units(10);
+  EEPROM.put(defaults::kEEPROMSensorMinValueAddress, sensor_settings.min_value);
 #ifdef DEBUG
   Serial.printf("min value (after tare): %i\n", (int)sensor_settings.min_value);
   Serial.printf(F("place the max. allowed weight on the loadcell\n"));
 #endif
-  // you have 10 seconds to load the cell with 1kg
-  delay(10000);
-
+  // you have some time to load the cell with the maximum weight/force
+  delay(sensor_settings.calibration_delay);
   sensor_settings.max_value = sensor.get_units(10);
+  EEPROM.put(defaults::kEEPROMSensorMaxValueAddress, sensor_settings.max_value);
 #ifdef DEBUG
   Serial.printf("max. value : %i\n", (int)sensor_settings.max_value);
 #endif
@@ -225,13 +238,20 @@ void setup() {
 #ifdef DEBUG
   Serial.printf("HAPTIC GAS PEDAL (%s)\n\n", VERSION);
   Serial.println(F("======================= SETUP ======================="));
+  Serial.printf("\nUSAGE \
+                \n\t send 'c' to calibrate the sensor \
+                \n\t send 's' to set the min. and max. vaules \
+                \n\t send 't' to tare the sensor \
+                \n\t send 'r' to toggle on/off sensor recording \
+                \n\t send 'a' to toggle on/off augmentation \
+                \n");
 #endif
 
   SetupAudio();
   SetupSensor();
 
 #ifdef DEBUG
-  Serial.printf(">>> Signal generator settings \n\t bins: %d \n\t wave: %d \n\t amp: %.2f \n\t freq: %.2f Hz \n\t dur: %d µs\n",
+  Serial.printf(">>> signal generator settings \n\t bins: %d \n\t wave: %d \n\t amp: %.2f \n\t freq: %.2f Hz \n\t dur: %d µs\n",
                 (int)signal_generator_settings.number_of_bins,
                 (int)signal_generator_settings.waveform,
                 signal_generator_settings.amp,
@@ -246,9 +266,8 @@ void setup() {
 
 
 void loop() {
-  delay(1);
+  delay(1); // check if actually needed to give the serial port some time for reading
   if (Serial.available()) {
-    // check if 'c' is received (means 'do calibration')
     auto serial_c = (char)Serial.read();
     switch (serial_c) {
       case 'c': CalibrateSensor();
