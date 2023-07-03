@@ -11,11 +11,6 @@ int loadCellValMax = 600; // Max Load Cell Value (Displayed at the bottom)
 int recordInterval = 30;
 int baudRate = 115200;
 
-// ====================== GUI Controls =============================
-ControlP5 cp5;
-Textlabel recTimeLabel;
-ControlTimer timer;
-
 // ====================== GUI Layout =============================
 String participantID = "";
 String trialNumber = "";
@@ -27,19 +22,10 @@ boolean isMainTrial = false;
 boolean trialEnded = false;
 
 boolean isSerialAvailable = false;
+boolean isRecording = false;
 
 boolean[] buttonAvailable = { true, true, true, true }; // Array to track button availability
 int runCounter = 0; // Counter to keep track of the number of trials per participant
-
-// ====================== Colors =============================
-// https://colorhunt.co/palette/2a09443fa796fec260a10035
-color colorLabelsLight = color(255);
-color colorLabelsDark = color(0);
-color colorBackgroundLight = color(240);
-color colorVTop = color(42, 9, 68);
-color colorVBottom = color(63, 167, 150);
-color colorHInner = color(254, 194, 96);
-color colorHOuter = color(161, 0, 53);
 
 // Target properties
 float targetX;
@@ -58,10 +44,10 @@ float playerY;
 float playerSize = 150;
 color playerColor = color(0, 0, 255); // Blue
 float playerSpeed = 5;
-float velocityMultiplier = 0.005; // Adjust this value to control the velocity sensitivity
+float velocityMultiplier = 0.1; // Adjust this value to control the velocity sensitivity
 
 boolean gameActive = true;
-int timerDuration = 30 * 1000; // 30 seconds
+int timerDuration = 300 * 1000; // 30 seconds
 int startTime;
 int currentTrial = 0;
 int maxTrials = 3;
@@ -75,7 +61,6 @@ ArrayList<Float> samples;
 int sampleRate = 30; // Number of samples per second
 int sampleInterval = 1000 / sampleRate; // Interval between samples in milliseconds
 int lastSampleTime;
-//PrintWriter csvWriter;
 Table savedData;
 
 void settings() {
@@ -86,9 +71,6 @@ void settings() {
 
 void setup() {
   frameRate(100);
-
-  cp5 = new ControlP5(this);
-  cp5.setColor(ControlP5.THEME_RETRO);
 
   textAlign(LEFT, TOP);
 
@@ -144,14 +126,15 @@ void draw() {
       line(width / 2 - 200, height - 300, width / 2 + 200, height - 300);
       stroke(10);
       line(width / 2 - 200, -targetSize / 2 + 100, width / 2 + 200, -targetSize / 2 + 100);
-      
+
       String filename = "P" + participantID + "_" + buttonPressed + "_" + (runCounter + 1) + ".csv";
 
       String data = teensyPort.readStringUntil('\n');
       if (data != null) {
         data = trim(data);
         loadCellValue = int(data);
-        playerSpeed = map(loadCellValue, 0, 1023, height, 0) * velocityMultiplier; // Feed the maximum value of the calibrate_sensor_range from
+        //playerSpeed = map(loadCellValue, 0, 20000, height, 0) * velocityMultiplier; // Feed the maximum value of the calibrate_sensor_range from
+        playerSpeed = map(loadCellValue, 0, 2000, -50, 50) * -velocityMultiplier; // Feed the maximum value of the calibrate_sensor_range from
       }
 
       // Display the current loadCellValue and number of samples
@@ -184,7 +167,7 @@ void draw() {
 
         // Wrap the target's position around the screen
         if (targetY < -50 / 2 + 150 || targetY > height - 300) {
-          targetY = targetY + targetSpeed * direction;
+          //targetY = targetY + targetSpeed * direction;
           direction *= -1;
           resetTargetSpeed();
         } 
@@ -196,11 +179,9 @@ void draw() {
           resetPlayerSpeed();
         }
 
-        // Draw target
+        // Draw target and player
         fill(targetColor);
         rect(width / 2 - targetSize / 2, targetY - targetSize / 2, targetSize, targetSizeWidth);
-
-        // Draw player
         fill(playerColor);
         rect(width / 2 - playerSize / 2, playerY - playerSize / 2, playerSize, targetSizeWidth);
 
@@ -285,9 +266,9 @@ void resetPlayerSpeed() {
 }
 
 void keyPressed() {
-  if (keyCode == ENTER) {
-    resetGame(); // Reset game when Enter key is pressed
-  }
+  //if (keyCode == ENTER) {
+  //  resetGame(); // Reset game when Enter key is pressed
+  //}
   if (isFirstScreen) {
     // Participant ID input
     if (keyCode == BACKSPACE && participantID.length() > 0) {
@@ -298,6 +279,25 @@ void keyPressed() {
     } else if (keyCode >= 32 && keyCode <= 126) {
       participantID += key;
     }
+  }
+
+  // CONTROL KEYS //
+  if (key == 'c') {
+    // Send command to microcontroller to calibrate load cell
+    teensyPort.write('c');
+    println("Calibrating load cell");
+  } else if (key == 't') {
+    teensyPort.write('t');
+    println("Taring the load cell");
+  } else if (key == 'r') {
+    teensyPort.write('r');
+    println("Recording On/ Off");
+  } else if (key == 's') {
+    teensyPort.write('s');
+    println("Per participant sensor calibration");
+  } else if (key == 'a') {
+    teensyPort.write('a');
+    println("Start/ Stop Augmentation");
   }
 }
 
@@ -341,4 +341,5 @@ void mousePressed() {
 
 void trialDifficulty() {
   // Code to generate trial difficulty or even load it based on preset values.
+  
 }
