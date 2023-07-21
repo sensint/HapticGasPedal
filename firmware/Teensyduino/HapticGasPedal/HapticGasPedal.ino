@@ -244,6 +244,9 @@ void setup() {
                 \n\t send 't' to tare the sensor \
                 \n\t send 'r' to toggle on/off sensor recording \
                 \n\t send 'a' to toggle on/off augmentation \
+                \n\t send 'f' + number (e.g. f150) to set the frequency \
+                \n\t send 'b' + number (e.g. b10) to set the number of bins \
+                \n\t send 'd' + number (e.g. d10000) to set the pulse duration (in microseconds) \
                 \n");
 #endif
 
@@ -280,6 +283,34 @@ void loop() {
       break;
       case 'r': recording_enabled = !recording_enabled;
       break;
+      case 'f': { // frequency
+        if (Serial.available()) {
+          signal_generator_settings.frequency_hz = Serial.parseFloat();
+          signal.frequency(signal_generator_settings.frequency_hz);
+#ifdef DEBUG
+          Serial.printf("new frequency: %dHz\n", (int)signal_generator_settings.frequency_hz);
+#endif
+        }
+        break;
+      }
+      case 'b': { // number of bins
+        if (Serial.available()) {
+          signal_generator_settings.number_of_bins = (uint16_t)Serial.parseInt();
+#ifdef DEBUG
+          Serial.printf("new number of bins: %d\n", (int)signal_generator_settings.number_of_bins);
+#endif
+        }
+        break;
+      }
+      case 'd' : { // pulse duration
+        if (Serial.available()) {
+          signal_generator_settings.duration_us = (uint32_t)Serial.parseInt();
+#ifdef DEBUG
+          Serial.printf("new pulse duration: %dus\n", (int)signal_generator_settings.duration_us);
+#endif
+        }
+        break;
+      }
     }
   }
 
@@ -289,6 +320,13 @@ void loop() {
     auto sensor_value = sensor.get_units(1);
     // this will use raw XX-bit sensor data
     // auto sensor_value = sensor.get_value(1);
+
+    // this will limit the load cell to only one direction
+    // make sure to mount the sensor in the correct direction
+    if (sensor_value < 0) {
+      sensor_value = 0;
+    }
+
     filtered_sensor_value =
         (1.f - sensor_settings.filter_weight) * filtered_sensor_value +
         sensor_settings.filter_weight * sensor_value;
