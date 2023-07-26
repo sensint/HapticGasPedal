@@ -321,11 +321,8 @@ void loop() {
     // this will use raw XX-bit sensor data
     // auto sensor_value = sensor.get_value(1);
 
-    // this will limit the load cell to only one direction
-    // make sure to mount the sensor in the correct direction
-    if (sensor_value < 0) {
-      sensor_value = 0;
-    }
+    // this will limit the load cell to only one direction in the range of the calibrated values
+    sensor_value = constrain(sensor_value, sensor_settings.min_value, sensor_settings.max_value);
 
     filtered_sensor_value =
         (1.f - sensor_settings.filter_weight) * filtered_sensor_value +
