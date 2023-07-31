@@ -1,6 +1,5 @@
 // Targeting Task
 // To Do: In a particular trial, add a timer on the screen before the target starts moving
-// Targetting trajectory
 
 import controlP5.*;
 import java.io.*;
@@ -46,24 +45,6 @@ float targetSpeed;
 // ====================== Trajectory Settings =============================
 char profile;
 char difficultyOfTrajectory;
-float targetAmplitude = height - 425;
-; // Amplitude of the target's vertical movement
-float targetFrequencySine; // Frequency of the target's vertical movement
-float targetDurationSine; // Duration of the target's movement for a sine profile
-float targetDirection; // Direction of the target's vertical movement
-float targetAccelerationTriangle;
-int direction = 1; // 1 for moving down, -1 for moving up
-
-// Targeting Task
-float[] velocityRange = {0.1, 0.3, 0.6, 0.9};   // Different velocities for the slider
-
-float[] travelPercent =  {0, 0.25, 0.5, 0.75, 1.0}; // Different travel percentages
-float[] accelerationRange = {0, 0.1, -0.1};     // Different acceleration values
-
-// Index variables to keep track of current values from the arrays
-int velocityIndex = 0;
-int travelIndex = 0;
-int accelerationIndex = 0;
 
 // Player properties
 float playerX;
@@ -90,6 +71,7 @@ int sampleInterval = 1000 / sampleRate; // Interval between samples in milliseco
 int lastSampleTime;
 Table savedData;
 String[] trajectoryArray;
+int currentIndex = 0; // Variable to keep track of the current index in the array
 
 void settings() {
   int windowWidth = displayWidth / 3;
@@ -178,71 +160,26 @@ void draw() {
         if (loadCellValue > loadCellValMax) {
           loadCellValue = loadCellValMax;
         }
-          //playerSpeed = map(loadCellValue, 0, 20000, height, 0) * velocityMultiplier; // Feed the maximum value of the calibrate_sensor_range from
-        //playerSpeed = map(loadCellValue, 0, 2000, -50, 50) * -velocityMultiplier; // Feed the maximum value of the calibrate_sensor_range
-        //playerY = map(loadCellValue, 0, 1023, 125, height - 300); // For HS sliders
-        //playerY = map(loadCellValue, loadCellValMin, loadCellValMax, 125, height - 300); // UNCOMMENT when using the Load Cell Value
         playerY = map(loadCellValue, loadCellValMin, loadCellValMax, height - 300, 125); // UNCOMMENT when using the Load Cell Value
       }
-      // Display the current loadCellValue and number of samples
-      fill(0);
-      textSize(18);
-      textAlign(LEFT, TOP);
-      text("Speed: " + loadCellValue, 20, 20);
 
       if (gameActive) {
-        // Update player position
-        //if (keyPressed) {
-        //  if (keyCode == UP) {
-        //    playerY -= playerSpeed;
-        //  } else if (keyCode == DOWN) {
-        //    playerY += playerSpeed;
-        //  }
-        //}
-
         TableRow newRow = savedData.addRow();
         newRow.setInt("Time", (millis()-startTime));
         newRow.setFloat("User", playerY);
         newRow.setFloat("Target", targetY);
 
         saveTable(savedData, filename);
-
-        //playerY += playerSpeed; // uncomment this when there is a continuous stream of data from the microcontroller.
-
-        // Move the target continuously
-        //targetY += targetSpeed;
-
-        // Wrap the target's position around the screen
-        if (movingDown) {
-          targetY -= targetSpeed;
-        } else {
-          targetY += targetSpeed;
-        }
-
-        if (targetY < -50 / 2 + 150 || targetY > height - 300) {
-          //targetY = targetY + targetSpeed * direction;
-          movingDown = !movingDown;
-          //resetTargetSpeed();
-        } 
-
-        // Wrap the player's position around the screen
-        if (playerY < -50 / 2 + 150 || playerY > height - 300) {
-          //playerY = playerY + playerSpeed * direction;
-          //direction *= -1;
-          //resetPlayerSpeed();
-        }
+        
+        // Mapping the target values to the screen
+        targetY = map(float(trajectoryArray[currentIndex]), 0, 100, height-300, 125);
+        currentIndex = (currentIndex + 1) % trajectoryArray.length; // modulo operator % to ensure that the index wraps around when it reaches the end of the array
 
         // Draw target and player
         fill(targetColor);
         rect(width / 2 - targetSize / 2, targetY - targetSize / 2, targetSize, targetSizeWidth);
         fill(playerColor);
         rect(width / 2 - playerSize / 2, playerY - playerSize / 2, playerSize, targetSizeWidth);
-  
-        // Check for collision
-        if (abs(targetY - playerY) <= targetSize / 2 + playerSize / 2) {
-          // Target reached
-          // Do something here, e.g., increment score, display message, etc.
-        }
 
         // Check if the time is up
         if (millis() - startTime >= timerDuration) {
@@ -267,7 +204,6 @@ void draw() {
     text("Serial port is not available", width/2, height/2);
   }
 }
-//}
 
 void drawButtons() {
   fill(20);
@@ -312,9 +248,6 @@ void resetGame() {
 }
 
 void resetTargetSpeed() {
-  // Randomize target speed within the specified range
-  //targetSpeed = random(targetSpeedMin, targetSpeedMax) * (random(0, 1) > 0.5 ? 1 : -1);
-  //targetSpeed = velocityRange[int(random(velocityRange.length))]*5;
   targetSpeed = 0.6*5;
 }
 
@@ -390,82 +323,5 @@ void mousePressed() {
       isMainTrial = true;
       resetGame();
     }
-  }
-}
-
-void trialDifficulty() {
-  // Code to generate trial based on preset values.
-
-  // These need to be the position profiles
-  // Triangle: Continuously up - reflects - continuously down
-  // Plateau: Continuously up - hold up (3 seconds) - continuously down
-  // Sine: sliderY = height / 2 + amplitude * sin(TWO_PI * frequency * frameCount);
-  // Intermediate Plateau:
-  // Custom 1: increasing velocity continuously till dropping to 0 - reflects - decreasing velocity continously to dropping it to 0;
-
-  // Velocity = {0.2, 0.6, 1.0}
-  // Acceleration = {-0.1, 0, 0.1}
-  // Trajectory = {0.25, 0.5, 0.75, 1}
-
-  // Easy: if trialDifficultyIndex = 1{
-  // Velocity changes, no acceleration, no trajectory changes
-  // Triangle, plateau,
-
-  // Medium: if trialDifficultyIndex = 2{
-  // Velocity changes, acceleration changes, no trajectory changes
-  // Sine, custom 1
-
-  // Hard: if trialDifficultyIndex = 3{
-  // All change.
-  // Intermediate Sine, intermediate plateau, full custom 1, 
-
-  // Have a positive and negative versions of all the profiles -> Which gives 6 trials for each pedal OR run a single one for 1 minute
-
-  // The trajectory file should be saved once and read for each trial corresponding to the trial number.
-
-  //switch(difficultyOfTrajectory) {
-  //  case 'E': // Easy
-
-  //  break;
-  //  case 'M': // Medium
-  //  targetY = height / 2 + targetAmplitude * sin(TWO_PI * targetFrequencySine * targetDurationSine / 2);
-  //  break;
-  //  case 'D': // Difficulty
-
-  //  break;
-  //}
-
-  switch(profile) {
-  case 'S':
-    // Have the sine profile
-    targetY = height / 2 + targetAmplitude * sin(TWO_PI * targetFrequencySine * targetDurationSine / 2);
-    break;
-
-  case 'T':
-    // Have a triangle
-    if (movingDown) {
-      targetY -= targetSpeed;
-    } else {
-      targetY += targetSpeed;
-    }
-
-    if (targetY < -50 / 2 + 150 || targetY > height - 300) {
-      movingDown = !movingDown;
-    } 
-    break;
-
-  case'P':
-    // Have a plateau
-    // Maintain a certain velocity
-
-    // Reach the top and hold there for 3 seconds
-
-    // Come down with the certain velocity
-
-    break;
-
-  case 'C':
-    // Have a custom
-    break;
   }
 }
