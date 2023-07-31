@@ -1,5 +1,4 @@
 // Targeting Task
-// To Do: In a particular trial, add a timer on the screen before the target starts moving
 
 import controlP5.*;
 import java.io.*;
@@ -31,6 +30,8 @@ boolean isBufferClear = false;
 
 boolean[] buttonAvailable = { true, true, true, true }; // Array to track button availability
 int runCounter = 0; // Counter to keep track of the number of trials per participant
+int countdownDuration = 3; // Countdown duration in seconds
+int countdownTime; // Countdown time in frames
 
 // Target properties
 float targetX;
@@ -65,7 +66,6 @@ Serial teensyPort;
 int loadCellValue ; // Reading in gms
 
 // ====================== Saving =======================
-ArrayList<Float> samples;
 int sampleRate = 30; // Number of samples per second
 int sampleInterval = 1000 / sampleRate; // Interval between samples in milliseconds
 int lastSampleTime;
@@ -82,10 +82,9 @@ void settings() {
 void setup() {
   frameRate(100);
   textAlign(LEFT, TOP);
-  
+
   // Loading the Trajectory
   trajectoryArray = loadStrings("TotalTrajectoryEasy1.csv");
-  printArray(trajectoryArray);
 
   String[] portList = Serial.list();
   if (portList.length > 0) {
@@ -98,7 +97,7 @@ void setup() {
       resetGame();    // Initialize the game
     }
     catch (Exception e) {
-      println("Failed to connect to serial port: " + portName);
+      //println("Failed to connect to serial port: " + portName);
     }
   } else {
     println("No serial ports available.");
@@ -130,78 +129,93 @@ void draw() {
       text("Please fill the questionnaire", width / 2, height / 2 - 250);
     } else if (isThirdScreen) {
       text("Click to start the first trial", width / 2, height / 2);
-      if (isBufferClear == false){
+
+      if (isBufferClear == false) {
         teensyPort.clear();
         isBufferClear = true;
       }
+      currentIndex = 0;
+      frameCount = -1;
     } else if (isMainTrial) {   
-      
-      if (isBufferClear == false){
+
+      if (isBufferClear == false) {
         teensyPort.clear();
         isBufferClear = true;
       }
-      
-      textSize(20);
-      text("Trial: " + (runCounter + 1), width / 2 - 200, height / 1.1);
-      text("Participant ID: " + participantID, width / 2 - 50, height / 1.1);
-      text("Code: " + buttonPressed, width / 2 + 150, height / 1.1);
-      line(width / 2 - 200, height - 300, width / 2 + 200, height - 300);
-      stroke(10);
-      line(width / 2 - 200, -targetSize / 2 + 100, width / 2 + 200, -targetSize / 2 + 100);
-      //line(width / 2 - 200, 100, width / 2 + 200, 100);
 
-      String filename = "P" + participantID + "_" + buttonPressed + "_" + (runCounter + 1) + ".csv";
-
-      String data = teensyPort.readStringUntil('\n');
-      if (data != null) {
-        data = trim(data);
-        loadCellValue = int(data);
-
-        if (loadCellValue > loadCellValMax) {
-          loadCellValue = loadCellValMax;
-        }
-        playerY = map(loadCellValue, loadCellValMin, loadCellValMax, height - 300, 125); // UNCOMMENT when using the Load Cell Value
-      }
-
-      if (gameActive) {
-        TableRow newRow = savedData.addRow();
-        newRow.setInt("Time", (millis()-startTime));
-        newRow.setFloat("User", playerY);
-        newRow.setFloat("Target", targetY);
-
-        saveTable(savedData, filename);
-        
-        // Mapping the target values to the screen
-        targetY = map(float(trajectoryArray[currentIndex]), 0, 100, height-300, 125);
-        currentIndex = (currentIndex + 1) % trajectoryArray.length; // modulo operator % to ensure that the index wraps around when it reaches the end of the array
-
-        // Draw target and player
-        fill(targetColor);
-        rect(width / 2 - targetSize / 2, targetY - targetSize / 2, targetSize, targetSizeWidth);
-        fill(playerColor);
-        rect(width / 2 - playerSize / 2, playerY - playerSize / 2, playerSize, targetSizeWidth);
-
-        // Check if the time is up
-        if (millis() - startTime >= timerDuration) {
-          gameActive = false;
-          println("CSV saved successfully.");
-        }
-      } else {
-        // Trial over
+      // Countdown
+      countdownTime = countdownDuration * 80; // Convert the duration to frames
+      int timeRemaining = max(0, countdownTime - frameCount); // Calculate time remaining in frames
+      if (timeRemaining > 0) {
+        // Display the countdown on the screen
+        textSize(50);
+        textAlign(CENTER, CENTER);
         fill(0);
-        textSize(35);
-        textAlign(CENTER, BOTTOM);
-        text("Trial Over", width / 2, height / 2 - 50);
-        text("Click to proceed to the next trial", width / 2, height / 2 + 50);
+        text(timeRemaining/frameRate, width/2, height/2); // Convert frames back to seconds for display
+      } else {
+
         textSize(20);
-        savedData = new Table();
-        savedData.addColumn("Time");
-        savedData.addColumn("User");
-        savedData.addColumn("Target");
+        text("Trial: " + (runCounter + 1), width / 2 - 200, height / 1.1);
+        text("Participant ID: " + participantID, width / 2 - 50, height / 1.1);
+        text("Code: " + buttonPressed, width / 2 + 150, height / 1.1);
+        line(width / 2 - 200, height - 300, width / 2 + 200, height - 300);
+        stroke(10);
+        line(width / 2 - 200, -targetSize / 2 + 100, width / 2 + 200, -targetSize / 2 + 100);
+
+        String filename = "P" + participantID + "_" + buttonPressed + "_" + (runCounter + 1) + ".csv";
+
+        String data = teensyPort.readStringUntil('\n');
+        if (data != null) {
+          data = trim(data);
+          loadCellValue = int(data);
+
+          if (loadCellValue > loadCellValMax) {
+            loadCellValue = loadCellValMax;
+          }
+          playerY = map(loadCellValue, loadCellValMin, loadCellValMax, height - 300, 125); // UNCOMMENT when using the Load Cell Value
+        }  
+        
+        //text("Speed: " + playerY, width / 2 + 250, height / 1.2); TO CHECK IF WE ARE ABLE TO Read Serial Data
+
+        if (gameActive) {
+          TableRow newRow = savedData.addRow();
+          newRow.setInt("Time", (millis()-startTime));
+          newRow.setFloat("User", playerY);
+          newRow.setFloat("Target", targetY);
+
+          saveTable(savedData, filename);
+
+          // Mapping the target values to the screen
+          targetY = map(float(trajectoryArray[currentIndex]), 0, 100, height-300, 125);
+          currentIndex = (currentIndex + 1) % trajectoryArray.length; // modulo operator % to ensure that the index wraps around when it reaches the end of the array
+
+          // Draw target and player
+          fill(targetColor);
+          rect(width / 2 - targetSize / 2, targetY - targetSize / 2, targetSize, targetSizeWidth);
+          fill(playerColor);
+          rect(width / 2 - playerSize / 2, playerY - playerSize / 2, playerSize, targetSizeWidth);
+
+          // Check if the time is up
+          if (millis() - startTime >= timerDuration) {
+            gameActive = false;
+            println("CSV saved successfully.");
+          }
+        } else {
+          // Trial over
+          fill(0);
+          textSize(35);
+          textAlign(CENTER, BOTTOM);
+          text("Trial Over", width / 2, height / 2 - 50);
+          text("Click to proceed to the next trial", width / 2, height / 2 + 50);
+          textSize(20);
+          savedData = new Table();
+          savedData.addColumn("Time");
+          savedData.addColumn("User");
+          savedData.addColumn("Target");
+          currentIndex = 0;
+        }
       }
     }
-  } else {
-    text("Serial port is not available", width/2, height/2);
   }
 }
 
