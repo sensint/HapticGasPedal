@@ -6,10 +6,12 @@ import controlP5.*;
 import java.io.*;
 import java.util.*;
 import processing.serial.*;
+import processing.data.Table;
+import processing.data.TableRow;
 
 // ====================== Defaults =============================
 int loadCellValMin = 0;
-int loadCellValMax = 10000; // Replace when mounted on the pedal with the maximum value which can be achieved with the load cell.
+int loadCellValMax = 6500; // Replace when mounted on the pedal with the maximum value which can be achieved with the load cell.
 int recordInterval = 30;
 int baudRate = 115200;
 
@@ -26,6 +28,7 @@ boolean movingDown = true; // Flag to determine slider direction
 
 boolean isSerialAvailable = false;
 boolean isRecording = false;
+boolean isBufferClear = false;
 
 boolean[] buttonAvailable = { true, true, true, true }; // Array to track button availability
 int runCounter = 0; // Counter to keep track of the number of trials per participant
@@ -86,6 +89,7 @@ int sampleRate = 30; // Number of samples per second
 int sampleInterval = 1000 / sampleRate; // Interval between samples in milliseconds
 int lastSampleTime;
 Table savedData;
+String[] trajectoryArray;
 
 void settings() {
   int windowWidth = displayWidth / 3;
@@ -95,12 +99,15 @@ void settings() {
 
 void setup() {
   frameRate(100);
-
   textAlign(LEFT, TOP);
+  
+  // Loading the Trajectory
+  trajectoryArray = loadStrings("TotalTrajectoryEasy1.csv");
+  printArray(trajectoryArray);
 
   String[] portList = Serial.list();
   if (portList.length > 0) {
-    String portName = portList[1];
+    String portName = portList[0];
     try {
       teensyPort = new Serial(this, portName, baudRate);
       println("Serial port connected: " + portName);
@@ -141,8 +148,17 @@ void draw() {
       text("Please fill the questionnaire", width / 2, height / 2 - 250);
     } else if (isThirdScreen) {
       text("Click to start the first trial", width / 2, height / 2);
+      if (isBufferClear == false){
+        teensyPort.clear();
+        isBufferClear = true;
+      }
     } else if (isMainTrial) {   
-
+      
+      if (isBufferClear == false){
+        teensyPort.clear();
+        isBufferClear = true;
+      }
+      
       textSize(20);
       text("Trial: " + (runCounter + 1), width / 2 - 200, height / 1.1);
       text("Participant ID: " + participantID, width / 2 - 50, height / 1.1);
