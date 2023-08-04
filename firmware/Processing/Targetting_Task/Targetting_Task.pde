@@ -70,7 +70,23 @@ int sampleRate = 30; // Number of samples per second
 int sampleInterval = 1000 / sampleRate; // Interval between samples in milliseconds
 int lastSampleTime;
 Table savedData;
-String[] trajectoryArray;
+
+String[] trajectoryArrayEasy1;
+String[] trajectoryArrayMedium1;
+String[] trajectoryArrayHard1;
+
+String[] trajectoryArrayEasy2;
+String[] trajectoryArrayMedium2;
+String[] trajectoryArrayHard2;
+
+String[] trajectoryArrayEasy3;
+String[] trajectoryArrayMedium3;
+String[] trajectoryArrayHard3;
+
+String[] trajectoryArrayEasy4;
+String[] trajectoryArrayMedium4;
+String[] trajectoryArrayHard4;
+
 int currentIndex = 0; // Variable to keep track of the current index in the array
 
 void settings() {
@@ -83,8 +99,21 @@ void setup() {
   frameRate(100);
   textAlign(LEFT, TOP);
 
-  // Loading the Trajectory
-  trajectoryArray = loadStrings("TotalTrajectoryEasy1.csv");
+  // Loading the Trajectories
+  trajectoryArrayEasy1 = loadStrings("TotalTrajectoryEasy1.csv");
+  trajectoryArrayEasy2 = loadStrings("TotalTrajectoryEasy2.csv");
+  trajectoryArrayEasy3 = loadStrings("TotalTrajectoryEasy3.csv");
+  trajectoryArrayEasy4 = loadStrings("TotalTrajectoryEasy4.csv");
+
+  trajectoryArrayMedium1 = loadStrings("TotalTrajectoryMedium1.csv");
+  trajectoryArrayMedium2 = loadStrings("TotalTrajectoryMedium2.csv");
+  trajectoryArrayMedium3 = loadStrings("TotalTrajectoryMedium3.csv");
+  trajectoryArrayMedium4 = loadStrings("TotalTrajectoryMedium4.csv");
+
+  trajectoryArrayHard1 = loadStrings("TotalTrajectoryHard1.csv");
+  trajectoryArrayHard2 = loadStrings("TotalTrajectoryHard2.csv");
+  trajectoryArrayHard3 = loadStrings("TotalTrajectoryHard3.csv");
+  trajectoryArrayHard4 = loadStrings("TotalTrajectoryHard4.csv");
 
   String[] portList = Serial.list();
   if (portList.length > 0) {
@@ -174,7 +203,7 @@ void draw() {
           }
           playerY = map(loadCellValue, loadCellValMin, loadCellValMax, height - 300, 125); // UNCOMMENT when using the Load Cell Value
         }  
-        
+
         //text("Speed: " + playerY, width / 2 + 250, height / 1.2); TO CHECK IF WE ARE ABLE TO Read Serial Data
 
         if (gameActive) {
@@ -186,8 +215,48 @@ void draw() {
           saveTable(savedData, filename);
 
           // Mapping the target values to the screen
-          targetY = map(float(trajectoryArray[currentIndex]), 0, 100, height-300, 125);
-          currentIndex = (currentIndex + 1) % trajectoryArray.length; // modulo operator % to ensure that the index wraps around when it reaches the end of the array
+          if (buttonPressed.equals("CA")) {
+            if (runCounter == 0) {
+              targetY = map(float(trajectoryArrayEasy1[currentIndex]), 0, 100, height-300, 125);
+            } else if (runCounter == 1) {
+              targetY = map(float(trajectoryArrayMedium1[currentIndex]), 0, 100, height-300, 125);
+            } else {
+              targetY = map(float(trajectoryArrayHard1[currentIndex]), 0, 100, height-300, 125);
+            }
+          }
+
+          if (buttonPressed.equals("CN")) {
+            if (runCounter == 0) {
+              targetY = map(float(trajectoryArrayEasy2[currentIndex]), 0, 100, height-300, 125);
+            } else if (runCounter == 1) {
+              targetY = map(float(trajectoryArrayMedium2[currentIndex]), 0, 100, height-300, 125);
+            } else {
+              targetY = map(float(trajectoryArrayHard2[currentIndex]), 0, 100, height-300, 125);
+            }
+          }
+
+          if (buttonPressed.equals("RA")) {
+            if (runCounter == 0) {
+              targetY = map(float(trajectoryArrayEasy3[currentIndex]), 0, 100, height-300, 125);
+            } else if (runCounter == 1) {
+              targetY = map(float(trajectoryArrayMedium3[currentIndex]), 0, 100, height-300, 125);
+            } else {
+              targetY = map(float(trajectoryArrayHard3[currentIndex]), 0, 100, height-300, 125);
+            }
+          }
+
+          if (buttonPressed.equals("RN")) {
+            if (runCounter == 0) {
+              targetY = map(float(trajectoryArrayEasy4[currentIndex]), 0, 100, height-300, 125);
+            } else if (runCounter == 1) {
+              targetY = map(float(trajectoryArrayMedium4[currentIndex]), 0, 100, height-300, 125);
+            } else {
+              targetY = map(float(trajectoryArrayHard4[currentIndex]), 0, 100, height-300, 125);
+            }
+          }
+
+          //targetY = map(float(trajectoryArrayEasy1[currentIndex]), 0, 100, height-300, 125);
+          currentIndex = (currentIndex + 1) % trajectoryArrayEasy1.length; // modulo operator % to ensure that the index wraps around when it reaches the end of the array
 
           // Draw target and player
           fill(targetColor);
