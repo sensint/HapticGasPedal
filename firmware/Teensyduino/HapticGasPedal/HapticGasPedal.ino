@@ -33,10 +33,10 @@ enum class Waveform : short {
 };
 
 //=========== signal generator ===========
-static constexpr uint16_t kNumberOfBins = 20;
+static constexpr uint16_t kNumberOfBins = 36;
 static constexpr uint32_t kSignalDurationUs = 10000; // in microseconds
 static constexpr short kSignalWaveform = static_cast<short>(Waveform::kSine);
-static constexpr float kSignalFreqencyHz = 150.f;
+static constexpr float kSignalFreqencyHz = 80.f;
 static constexpr float kSignalAmp = 1.f;
 
 //=========== sensor ===========
@@ -45,8 +45,8 @@ static constexpr uint8_t kSensorDataPin = 25;
 static constexpr float kFilterWeight = 0.7;
 static constexpr float kSensorScale = 1.f;  // will be overwritten from EEPROM
 static constexpr uint32_t kSensorMinValue = 0; // in grams - will be overwritten from EEPROM
-static constexpr uint32_t kSensorMaxValue = 20000; // in grams - will be overwritten from EEPROM
-static constexpr uint32_t kSensorJitterThreshold = 7; // increase value if vibration starts resonating too much
+static constexpr uint32_t kSensorMaxValue = 10000; // in grams - will be overwritten from EEPROM
+static constexpr uint32_t kSensorJitterThreshold = 15; // increase value if vibration starts resonating too much
 static constexpr uint32_t kSendSensorDataMaxDelayMs = 30; // in milliseconds
 static constexpr uint32_t kCalibrationDelayMs = 5000; // in milliseconds
 static constexpr uint16_t kCalibrationWeight = 100; // in grams - set to value of your known weight
