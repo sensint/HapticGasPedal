@@ -57,6 +57,8 @@ static constexpr uint16_t kCalibrationWeight = 100; // in grams - set to value o
 static constexpr int kEEPROMSensorScaleAddress = 0; // holds a 32 bit (4 byte) float
 static constexpr int kEEPROMSensorMinValueAddress = 4; // holds a 32 bit (4 byte) uint32_t
 static constexpr int kEEPROMSensorMaxValueAddress = 8; // holds a 32 bit (4 byte) uint32_t
+static constexpr int kEEPROMSensorCompliantPedalMaxValueAddress = 12; // holds a 32 bit (4 byte) uint32_t
+static constexpr int kEEPROMSensorRigidPedalMaxValueAddress = 16; // holds a 32 bit (4 byte) uint32_t
 
 //=========== serial ===========
 static constexpr int kBaudRate = 115200;
@@ -123,6 +125,12 @@ inline void SetupSerial() __attribute__((always_inline));
 inline void SetupAudio() __attribute__((always_inline));
 inline void SetupSensor() __attribute__((always_inline));
 inline void CalibrateSensor() __attribute__((always_inline));
+inline void CalibrateMin() __attribute__((always_inline));
+inline void CalibrateCompliantPedalMax() __attribute__((always_inline));
+inline void CalibrateRigidPedalMax() __attribute__((always_inline));
+inline void UseCompliantPedalMax() __attribute__((always_inline));
+inline void UseRigidPedalMax() __attribute__((always_inline));
+
 
 void SetupSerial() {
   while (!Serial && millis() < 5000)
@@ -202,6 +210,75 @@ void CalibrateSensorRange() {
 #endif
 }
 
+void CalibrateMin() {
+#ifdef DEBUG
+  Serial.printf("HX711 units (before calibration): %f\n", sensor.get_units(10));
+  Serial.printf(F("clear the loadcell from any weight\n"));
+#endif
+  // you have some time to unload the cell
+  delay(sensor_settings.calibration_delay);
+  sensor.tare();
+  sensor_settings.min_value = sensor.get_units(10);
+  EEPROM.put(defaults::kEEPROMSensorMinValueAddress, sensor_settings.min_value);
+#ifdef DEBUG
+  Serial.printf("min value (after tare): %i\n", (int)sensor_settings.min_value);
+#endif
+}
+
+void CalibrateCompliantPedalMax() {
+#ifdef DEBUG
+  Serial.printf("HX711 units (before calibration): %f\n", sensor.get_units(10));
+#endif
+  sensor.tare();
+#ifdef DEBUG
+  Serial.printf(F("place the max. allowed weight on the loadcell\n"));
+#endif
+  // you have some time to load the cell with the maximum weight/force
+  delay(sensor_settings.calibration_delay);
+  sensor_settings.max_value = sensor.get_units(10);
+  EEPROM.put(defaults::kEEPROMSensorCompliantPedalMaxValueAddress, sensor_settings.max_value);
+#ifdef DEBUG
+  Serial.printf("compliant pedal max. value : %i\n", (int)sensor_settings.max_value);
+#endif
+}
+
+void CalibrateRigidPedalMax() {
+#ifdef DEBUG
+  Serial.printf("HX711 units (before calibration): %f\n", sensor.get_units(10));
+#endif
+  sensor.tare();
+#ifdef DEBUG
+  Serial.printf(F("place the max. allowed weight on the loadcell\n"));
+#endif
+  // you have some time to load the cell with the maximum weight/force
+  delay(sensor_settings.calibration_delay);
+  sensor_settings.max_value = sensor.get_units(10);
+  EEPROM.put(defaults::kEEPROMSensorRigidPedalMaxValueAddress, sensor_settings.max_value);
+#ifdef DEBUG
+  Serial.printf("rigid pedal max. value : %i\n", (int)sensor_settings.max_value);
+#endif
+}
+
+void UseCompliantPedalMax() {
+  EEPROM.get(defaults::kEEPROMSensorMinValueAddress, sensor_settings.min_value);
+  EEPROM.get(defaults::kEEPROMSensorCompliantPedalMaxValueAddress, sensor_settings.max_value);
+#ifdef DEBUG
+  Serial.printf(">>> compliant pedal values from EEPROM:\n\t min=%d\n\t max=%d\n",
+                (int)sensor_settings.min_value,
+                (int)sensor_settings.max_value);
+#endif
+}
+
+void UseRigidPedalMax() {
+  EEPROM.get(defaults::kEEPROMSensorMinValueAddress, sensor_settings.min_value);
+  EEPROM.get(defaults::kEEPROMSensorRigidPedalMaxValueAddress, sensor_settings.max_value);
+#ifdef DEBUG
+  Serial.printf(">>> rigid pedal values from EEPROM:\n\t min=%d\n\t max=%d\n",
+                (int)sensor_settings.min_value,
+                (int)sensor_settings.max_value);
+#endif
+}
+
 /**
  * @brief start a pulse by setting the amplitude of the signal to a predefined
  * value
@@ -242,7 +319,12 @@ void setup() {
   Serial.println(F("======================= SETUP ======================="));
   Serial.printf("\nUSAGE \
                 \n\t send 'c' to calibrate the sensor \
-                \n\t send 's' to set the min. and max. vaules \
+                \n\t send 's' to set the global min. and max. vaules \
+                \n\t send 'SM' to set the global min. \
+                \n\t send 'SC' to set the max. for compliant pedal\
+                \n\t send 'SR' to set the max. for rigid pedal\
+                \n\t send 'UC' use compliant pedal max.\
+                \n\t send 'UR' use rigid pedal max.\
                 \n\t send 't' to tare the sensor \
                 \n\t send 'r' to toggle on/off sensor recording \
                 \n\t send 'a' to toggle on/off augmentation \
@@ -279,6 +361,32 @@ void loop() {
       break;
       case 's': CalibrateSensorRange();
       break;
+      case 'S': {
+        if (!Serial.available()) {
+          break;
+        }
+        serial_c = (char)Serial.read();
+        if (serial_c == 'C') {
+          CalibrateCompliantPedalMax();
+        } else if (serial_c == 'R') {
+          CalibrateRigidPedalMax();
+        } else if (serial_c == 'M') {
+          CalibrateMin();
+        }
+      break;
+      }
+      case 'U': {
+        if (!Serial.available()) {
+          break;
+        }
+        serial_c = (char)Serial.read();
+        if (serial_c == 'C') {
+          UseCompliantPedalMax();
+        } else if (serial_c == 'R') {
+          UseRigidPedalMax();
+        }
+      break;
+      }
       case 't': sensor.tare();
       break;
       case 'a': augmentation_enabled = !augmentation_enabled;
