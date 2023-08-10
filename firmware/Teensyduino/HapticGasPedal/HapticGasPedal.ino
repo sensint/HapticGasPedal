@@ -4,10 +4,12 @@
 #include <EEPROM.h>
 #include <HX711.h> // install the HX711 library by Rob Tillaart (https://github.com/RobTillaart/HX711)
 
-#define VERSION "v1.0.0"
+#define VERSION "v1.1.0"
 
 // uncomment to enable printing debug information to the serial port
 #define DEBUG
+// uncomment to enable printing information of the augmentation to the serial port
+#define DEBUG_A
 
 
 namespace defaults {
@@ -211,7 +213,7 @@ void StartPulse() {
   signal.amplitude(signal_generator_settings.amp);
   pulse_time_us = 0;
   is_vibrating = true;
-#ifdef DEBUG
+#ifdef DEBUG_A
   Serial.printf(">>> Start pulse \n\t wave: %d \n\t amp: %.2f \n\t freq: %.2f Hz \n\t dur: %d µs\n",
                 (int)signal_generator_settings.waveform,
                 signal_generator_settings.amp,
@@ -226,7 +228,7 @@ void StartPulse() {
 void StopPulse() {
   signal.amplitude(0.f);
   is_vibrating = false;
-#ifdef DEBUG
+#ifdef DEBUG_A
   Serial.println(F(">>> Stop pulse"));
 #endif
 }
@@ -357,14 +359,14 @@ void loop() {
   
   if (mapped_bin_id != last_bin_id) {
     if (is_vibrating) {
-#ifdef DEBUG
+#ifdef DEBUG_A
       Serial.println(F(">>> Stop pulse before it finished"));
 #endif
       StopPulse();
       delay(1); // debatable ;) maybe use delayMicroseconds(100) instead
     }
     
-#ifdef DEBUG
+#ifdef DEBUG_A
     Serial.printf(">>> Change bin \n\t bin id: %d\n", (int)mapped_bin_id);
 #endif
     StartPulse();
