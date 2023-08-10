@@ -8,10 +8,10 @@ import processing.data.Table;
 import processing.data.TableRow;
 
 // ====================== Defaults =============================
-int loadCellValMin = 0;
+int loadCellValMin = 3953;
 int loadCellValMax = 10000; // Replace when mounted on the pedal with the maximum value which can be achieved with the load cell.
-int loadCellValMaxCompliant = 17000;
-int loadCellValMaxRigid = 10000;
+int loadCellValMaxCompliant = 12000;
+int loadCellValMaxRigid = 12459;
 int recordInterval = 30;
 int baudRate = 115200;
 
@@ -179,7 +179,7 @@ void draw() {
         textSize(50);
         textAlign(CENTER, CENTER);
         fill(0);
-        text(timeRemaining/frameRate, width/2, height/2); // Convert frames back to seconds for display
+        text((int) ((timeRemaining/frameRate)+1.2), width/2, height/2); // Convert frames back to seconds for display
       } else {
 
         textSize(20);
@@ -199,6 +199,9 @@ void draw() {
 
           if (loadCellValue > loadCellValMax) {
             loadCellValue = loadCellValMax;
+          }
+          if (loadCellValue < loadCellValMin) {
+            loadCellValue = loadCellValMin;
           }
           playerY = map(loadCellValue, loadCellValMin, loadCellValMax, height - 300, 125); // UNCOMMENT when using the Load Cell Value
         }  
@@ -407,6 +410,7 @@ void mousePressed() {
       runCounter = 0;
     } else {
       // Reset for the next trial
+      frameCount = -1;
       isSecondScreen = false;
       isMainTrial = true;
       resetGame();
