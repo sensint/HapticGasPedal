@@ -196,7 +196,6 @@ void CalibrateSensorRange() {
   delay(sensor_settings.calibration_delay);
   sensor.tare();
   sensor_settings.min_value = sensor.get_units(10);
-  EEPROM.put(defaults::kEEPROMSensorMinValueAddress, sensor_settings.min_value);
 #ifdef DEBUG
   Serial.printf("min value (after tare): %i\n", (int)sensor_settings.min_value);
   Serial.printf(F("place the max. allowed weight on the loadcell\n"));
@@ -204,6 +203,13 @@ void CalibrateSensorRange() {
   // you have some time to load the cell with the maximum weight/force
   delay(sensor_settings.calibration_delay);
   sensor_settings.max_value = sensor.get_units(10);
+  if (sensor_settings.min_value >= sensor_settings.max_value) {
+    sensor_settings.min_value = 0;
+#ifdef DEBUG
+  Serial.printf(F("WARNING: min exceeded max value"));
+#endif
+  }
+  EEPROM.put(defaults::kEEPROMSensorMinValueAddress, sensor_settings.min_value);
   EEPROM.put(defaults::kEEPROMSensorMaxValueAddress, sensor_settings.max_value);
 #ifdef DEBUG
   Serial.printf("max. value : %i\n", (int)sensor_settings.max_value);
@@ -213,12 +219,18 @@ void CalibrateSensorRange() {
 void CalibrateMin() {
 #ifdef DEBUG
   Serial.printf("HX711 units (before calibration): %f\n", sensor.get_units(10));
-  Serial.printf(F("clear the loadcell from any weight\n"));
+  Serial.printf(F("rest your foot on the pedal\n"));
 #endif
   // you have some time to unload the cell
   delay(sensor_settings.calibration_delay);
   sensor.tare();
   sensor_settings.min_value = sensor.get_units(10);
+  if (sensor_settings.min_value >= sensor_settings.max_value) {
+    sensor_settings.min_value = 0;
+#ifdef DEBUG
+  Serial.printf(F("WARNING: min exceeded max value"));
+#endif
+  }
   EEPROM.put(defaults::kEEPROMSensorMinValueAddress, sensor_settings.min_value);
 #ifdef DEBUG
   Serial.printf("min value (after tare): %i\n", (int)sensor_settings.min_value);
