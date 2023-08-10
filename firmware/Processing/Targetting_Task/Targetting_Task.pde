@@ -8,10 +8,10 @@ import processing.data.Table;
 import processing.data.TableRow;
 
 // ====================== Defaults =============================
-int loadCellValMin = 3953;
-int loadCellValMax = 10000; // Replace when mounted on the pedal with the maximum value which can be achieved with the load cell.
-int loadCellValMaxCompliant = 12000;
-int loadCellValMaxRigid = 12459;
+int loadCellValMin = 55;
+int loadCellValMax = 14000; // Replace when mounted on the pedal with the maximum value which can be achieved with the load cell.
+int loadCellValMaxCompliant = 14000;
+int loadCellValMaxRigid = 4000;
 int recordInterval = 30;
 int baudRate = 115200;
 
@@ -371,6 +371,12 @@ void keyPressed() {
   } else if (key == 'a') {
     teensyPort.write('a');
     println("Start/ Stop Augmentation");
+  } else if (key == 'K') {
+    teensyPort.write("UC");
+    println("Sensor Max for Compliant Pedal Selected");
+  } else if (key == 'L') {
+    teensyPort.write("UR");
+    println("Sensor Max for Rigid Pedal Selected");
   }
 }
 
