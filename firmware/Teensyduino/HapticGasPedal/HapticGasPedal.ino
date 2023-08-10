@@ -274,7 +274,7 @@ void CalibrateRigidPedalMax() {
 void UseCompliantPedalMax() {
   EEPROM.get(defaults::kEEPROMSensorMinValueAddress, sensor_settings.min_value);
   EEPROM.get(defaults::kEEPROMSensorCompliantPedalMaxValueAddress, sensor_settings.max_value);
-#ifdef DEBUG
+#ifdef DEBUG_A
   Serial.printf(">>> compliant pedal values from EEPROM:\n\t min=%d\n\t max=%d\n",
                 (int)sensor_settings.min_value,
                 (int)sensor_settings.max_value);
@@ -284,7 +284,7 @@ void UseCompliantPedalMax() {
 void UseRigidPedalMax() {
   EEPROM.get(defaults::kEEPROMSensorMinValueAddress, sensor_settings.min_value);
   EEPROM.get(defaults::kEEPROMSensorRigidPedalMaxValueAddress, sensor_settings.max_value);
-#ifdef DEBUG
+#ifdef DEBUG_A
   Serial.printf(">>> rigid pedal values from EEPROM:\n\t min=%d\n\t max=%d\n",
                 (int)sensor_settings.min_value,
                 (int)sensor_settings.max_value);
