@@ -9,7 +9,9 @@ import processing.data.TableRow;
 
 // ====================== Defaults =============================
 int loadCellValMin = 0;
-int loadCellValMax = 6500; // Replace when mounted on the pedal with the maximum value which can be achieved with the load cell.
+int loadCellValMax = 10000; // Replace when mounted on the pedal with the maximum value which can be achieved with the load cell.
+int loadCellValMaxCompliant = 17000;
+int loadCellValMaxRigid = 10000;
 int recordInterval = 30;
 int baudRate = 115200;
 
@@ -44,9 +46,6 @@ float targetSpeedMax = 5;
 float targetSpeed;
 
 // ====================== Trajectory Settings =============================
-char profile;
-char difficultyOfTrajectory;
-
 // Player properties
 float playerX;
 float playerY;
@@ -288,6 +287,7 @@ void draw() {
   }
 }
 
+
 void drawButtons() {
   fill(20);
   for (int i = 0; i < 4; i++) {
@@ -325,7 +325,7 @@ void resetGame() {
 
   resetTargetSpeed();
   resetPlayerSpeed();
-
+  
   gameActive = true;
   startTime = millis(); // Restart the timer
 }
@@ -381,6 +381,11 @@ void mousePressed() {
       if (buttonAvailable[i] && mouseY > height / 2 - 20 && mouseY < height / 2 + 20 &&
         mouseX > width / 2 - 100 + i * 50 && mouseX < width / 2 - 60 + i * 50) {
         buttonPressed = getButtonLabel(i);
+        if (buttonPressed.equals("CA") || buttonPressed.equals("CN")) {
+          loadCellValMax = loadCellValMaxCompliant;
+        } else {
+          loadCellValMax = loadCellValMaxRigid;
+        }
         buttonAvailable[i] = false; // Disable the button
         isSecondScreen = false;
         isThirdScreen = true;
