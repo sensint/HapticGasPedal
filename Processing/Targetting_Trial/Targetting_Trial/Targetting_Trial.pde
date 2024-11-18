@@ -6,10 +6,10 @@ import java.util.*;
 import processing.serial.*;
 
 // ====================== Defaults =============================
-int loadCellValMin = 4000;
-int loadCellValMax = 17000; // Max Load Cell Value (Displayed at the bottom)
-int loadCellValMaxCompliant = 17000;
-int loadCellValMaxRigid = 10000;
+int loadCellValMin = 0;
+int loadCellValMax = 6500; // Max Load Cell Value (Displayed at the bottom)
+int loadCellValMaxCompliant = 6500;
+int loadCellValMaxRigid = 6500;
 int recordInterval = 30;
 int baudRate = 115200;
 
@@ -212,6 +212,7 @@ void draw() {
         savedData.addColumn("Time");
         savedData.addColumn("User");
         savedData.addColumn("Target");
+        isBufferClear = false;
       }
     }
   } else {
@@ -234,13 +235,13 @@ void drawButtons() {
 String getButtonLabel(int index) {
   switch (index) {
   case 0:
-    return "CA";
+    return "DA";
   case 1:
-    return "RA";
+    return "SA";
   case 2:
-    return "CN";
+    return "DN";
   case 3:
-    return "RN";
+    return "SN";
   default:
     return "";
   }
@@ -303,6 +304,12 @@ void keyPressed() {
   } else if (key == 'a') {
     teensyPort.write('a');
     println("Start/ Stop Augmentation");
+  } else if (key == 'K') {
+    teensyPort.write("UC");
+    println("Sensor Max for Compliant Pedal Selected");
+  } else if (key == 'L') {
+    teensyPort.write("UR");
+    println("Sensor Max for Rigid Pedal Selected");
   }
 }
 
@@ -316,7 +323,7 @@ void mousePressed() {
       if (buttonAvailable[i] && mouseY > height / 2 - 20 && mouseY < height / 2 + 20 &&
         mouseX > width / 2 - 100 + i * 50 && mouseX < width / 2 - 60 + i * 50) {
         buttonPressed = getButtonLabel(i);
-        if (buttonPressed.equals("CA") || buttonPressed.equals("CN")) {
+        if (buttonPressed.equals("DA") || buttonPressed.equals("DN")) {
           loadCellValMax = loadCellValMaxCompliant;
         } else {
           loadCellValMax = loadCellValMaxRigid;

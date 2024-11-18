@@ -9,7 +9,7 @@
 // uncomment to enable printing debug information to the serial port
 #define DEBUG
 // uncomment to enable printing information of the augmentation to the serial port
-#define DEBUG_A
+// #define DEBUG_A
 
 
 namespace defaults {
@@ -48,7 +48,7 @@ static constexpr float kFilterWeight = 0.7;
 static constexpr float kSensorScale = 1.f;  // will be overwritten from EEPROM
 static constexpr uint32_t kSensorMinValue = 0; // in grams - will be overwritten from EEPROM
 static constexpr uint32_t kSensorMaxValue = 10000; // in grams - will be overwritten from EEPROM
-static constexpr uint32_t kSensorJitterThreshold = 15; // increase value if vibration starts resonating too much
+static constexpr uint32_t kSensorJitterThreshold =30; // increase value if vibration starts resonating too much
 static constexpr uint32_t kSendSensorDataMaxDelayMs = 30; // in milliseconds
 static constexpr uint32_t kCalibrationDelayMs = 5000; // in milliseconds
 static constexpr uint16_t kCalibrationWeight = 100; // in grams - set to value of your known weight

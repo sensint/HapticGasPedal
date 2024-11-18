@@ -8,10 +8,10 @@ import processing.data.Table;
 import processing.data.TableRow;
 
 // ====================== Defaults =============================
-int loadCellValMin = 55;
-int loadCellValMax = 14000; // Replace when mounted on the pedal with the maximum value which can be achieved with the load cell.
-int loadCellValMaxCompliant = 14000;
-int loadCellValMaxRigid = 4000;
+int loadCellValMin = 0;
+int loadCellValMax = 10000; // Replace when mounted on the pedal with the maximum value which can be achieved with the load cell.
+int loadCellValMaxCompliant = 17000;
+int loadCellValMaxRigid = 10000;
 int recordInterval = 30;
 int baudRate = 115200;
 
@@ -55,7 +55,7 @@ float playerSpeed = 5;
 float velocityMultiplier = 0.15; // Adjust this value to control the velocity sensitivity
 
 boolean gameActive = true;
-int timerDuration = 30 * 1000; // 30 seconds
+int timerDuration = 3 * 1000; // 30 seconds
 int startTime;
 int currentTrial = 0;
 int maxTrials = 3;
@@ -179,7 +179,7 @@ void draw() {
         textSize(50);
         textAlign(CENTER, CENTER);
         fill(0);
-        text((int) ((timeRemaining/frameRate)+1.2), width/2, height/2); // Convert frames back to seconds for display
+        text(timeRemaining/frameRate, width/2, height/2); // Convert frames back to seconds for display
       } else {
 
         textSize(20);
@@ -200,90 +200,91 @@ void draw() {
           if (loadCellValue > loadCellValMax) {
             loadCellValue = loadCellValMax;
           }
-          if (loadCellValue < loadCellValMin) {
-            loadCellValue = loadCellValMin;
-          }
           playerY = map(loadCellValue, loadCellValMin, loadCellValMax, height - 300, 125); // UNCOMMENT when using the Load Cell Value
         }  
 
         //text("Speed: " + playerY, width / 2 + 250, height / 1.2); TO CHECK IF WE ARE ABLE TO Read Serial Data
 
-        if (gameActive) {
-          TableRow newRow = savedData.addRow();
-          newRow.setInt("Time", (millis()-startTime));
-          newRow.setFloat("User", playerY);
-          newRow.setFloat("Target", targetY);
 
-          saveTable(savedData, filename);
+        else {
 
-          // Mapping the target values to the screen
-          if (buttonPressed.equals("CA")) {
-            if (runCounter == 0) {
-              targetY = map(float(trajectoryArrayEasy1[currentIndex]), 0, 100, height-300, 125);
-            } else if (runCounter == 1) {
-              targetY = map(float(trajectoryArrayMedium1[currentIndex]), 0, 100, height-300, 125);
-            } else {
-              targetY = map(float(trajectoryArrayHard1[currentIndex]), 0, 100, height-300, 125);
+          if (gameActive) {
+            TableRow newRow = savedData.addRow();
+            newRow.setInt("Time", (millis()-startTime));
+            newRow.setFloat("User", playerY);
+            newRow.setFloat("Target", targetY);
+
+            saveTable(savedData, filename);
+
+            // Mapping the target values to the screen
+            if (buttonPressed.equals("CA")) {
+              if (runCounter == 0) {
+                targetY = map(float(trajectoryArrayEasy1[currentIndex]), 0, 100, height-300, 125);
+              } else if (runCounter == 1) {
+                targetY = map(float(trajectoryArrayMedium1[currentIndex]), 0, 100, height-300, 125);
+              } else {
+                targetY = map(float(trajectoryArrayHard1[currentIndex]), 0, 100, height-300, 125);
+              }
             }
-          }
 
-          if (buttonPressed.equals("CN")) {
-            if (runCounter == 0) {
-              targetY = map(float(trajectoryArrayEasy2[currentIndex]), 0, 100, height-300, 125);
-            } else if (runCounter == 1) {
-              targetY = map(float(trajectoryArrayMedium2[currentIndex]), 0, 100, height-300, 125);
-            } else {
-              targetY = map(float(trajectoryArrayHard2[currentIndex]), 0, 100, height-300, 125);
+            if (buttonPressed.equals("CN")) {
+              if (runCounter == 0) {
+                targetY = map(float(trajectoryArrayEasy2[currentIndex]), 0, 100, height-300, 125);
+              } else if (runCounter == 1) {
+                targetY = map(float(trajectoryArrayMedium2[currentIndex]), 0, 100, height-300, 125);
+              } else {
+                targetY = map(float(trajectoryArrayHard2[currentIndex]), 0, 100, height-300, 125);
+              }
             }
-          }
 
-          if (buttonPressed.equals("RA")) {
-            if (runCounter == 0) {
-              targetY = map(float(trajectoryArrayEasy3[currentIndex]), 0, 100, height-300, 125);
-            } else if (runCounter == 1) {
-              targetY = map(float(trajectoryArrayMedium3[currentIndex]), 0, 100, height-300, 125);
-            } else {
-              targetY = map(float(trajectoryArrayHard3[currentIndex]), 0, 100, height-300, 125);
+            if (buttonPressed.equals("RA")) {
+              if (runCounter == 0) {
+                targetY = map(float(trajectoryArrayEasy3[currentIndex]), 0, 100, height-300, 125);
+              } else if (runCounter == 1) {
+                targetY = map(float(trajectoryArrayMedium3[currentIndex]), 0, 100, height-300, 125);
+              } else {
+                targetY = map(float(trajectoryArrayHard3[currentIndex]), 0, 100, height-300, 125);
+              }
             }
-          }
 
-          if (buttonPressed.equals("RN")) {
-            if (runCounter == 0) {
-              targetY = map(float(trajectoryArrayEasy4[currentIndex]), 0, 100, height-300, 125);
-            } else if (runCounter == 1) {
-              targetY = map(float(trajectoryArrayMedium4[currentIndex]), 0, 100, height-300, 125);
-            } else {
-              targetY = map(float(trajectoryArrayHard4[currentIndex]), 0, 100, height-300, 125);
+            if (buttonPressed.equals("RN")) {
+              if (runCounter == 0) {
+                targetY = map(float(trajectoryArrayEasy4[currentIndex]), 0, 100, height-300, 125);
+              } else if (runCounter == 1) {
+                targetY = map(float(trajectoryArrayMedium4[currentIndex]), 0, 100, height-300, 125);
+              } else {
+                targetY = map(float(trajectoryArrayHard4[currentIndex]), 0, 100, height-300, 125);
+              }
             }
+
+            //targetY = map(float(trajectoryArrayEasy1[currentIndex]), 0, 100, height-300, 125);
+            currentIndex = (currentIndex + 1) % trajectoryArrayEasy1.length; // modulo operator % to ensure that the index wraps around when it reaches the end of the array
+
+            // Draw target and player
+            fill(targetColor);
+            rect(width / 2 - targetSize / 2, targetY - targetSize / 2, targetSize, targetSizeWidth);
+            fill(playerColor);
+            rect(width / 2 - playerSize / 2, playerY - playerSize / 2, playerSize, targetSizeWidth);
+
+            // Check if the time is up
+            if (millis() - startTime >= timerDuration) {
+              gameActive = false;
+              println("CSV saved successfully.");
+            }
+          } else {
+            // Trial over
+            fill(0);
+            textSize(35);
+            textAlign(CENTER, BOTTOM);
+            text("Trial Over", width / 2, height / 2 - 50);
+            text("Click to proceed to the next trial", width / 2, height / 2 + 50);
+            textSize(20);
+            savedData = new Table();
+            savedData.addColumn("Time");
+            savedData.addColumn("User");
+            savedData.addColumn("Target");
+            currentIndex = 0;
           }
-
-          //targetY = map(float(trajectoryArrayEasy1[currentIndex]), 0, 100, height-300, 125);
-          currentIndex = (currentIndex + 1) % trajectoryArrayEasy1.length; // modulo operator % to ensure that the index wraps around when it reaches the end of the array
-
-          // Draw target and player
-          fill(targetColor);
-          rect(width / 2 - targetSize / 2, targetY - targetSize / 2, targetSize, targetSizeWidth);
-          fill(playerColor);
-          rect(width / 2 - playerSize / 2, playerY - playerSize / 2, playerSize, targetSizeWidth);
-
-          // Check if the time is up
-          if (millis() - startTime >= timerDuration) {
-            gameActive = false;
-            println("CSV saved successfully.");
-          }
-        } else {
-          // Trial over
-          fill(0);
-          textSize(35);
-          textAlign(CENTER, BOTTOM);
-          text("Trial Over", width / 2, height / 2 - 50);
-          text("Click to proceed to the next trial", width / 2, height / 2 + 50);
-          textSize(20);
-          savedData = new Table();
-          savedData.addColumn("Time");
-          savedData.addColumn("User");
-          savedData.addColumn("Target");
-          currentIndex = 0;
         }
       }
     }
@@ -328,7 +329,6 @@ void resetGame() {
 
   resetTargetSpeed();
   resetPlayerSpeed();
-  
   gameActive = true;
   startTime = millis(); // Restart the timer
 }
@@ -371,12 +371,6 @@ void keyPressed() {
   } else if (key == 'a') {
     teensyPort.write('a');
     println("Start/ Stop Augmentation");
-  } else if (key == 'K') {
-    teensyPort.write("UC");
-    println("Sensor Max for Compliant Pedal Selected");
-  } else if (key == 'L') {
-    teensyPort.write("UR");
-    println("Sensor Max for Rigid Pedal Selected");
   }
 }
 
@@ -416,7 +410,6 @@ void mousePressed() {
       runCounter = 0;
     } else {
       // Reset for the next trial
-      frameCount = -1;
       isSecondScreen = false;
       isMainTrial = true;
       resetGame();
