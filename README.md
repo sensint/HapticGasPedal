@@ -101,4 +101,4 @@ Project Link: [https://github.com/sensint/Servo_Haptics](https://github.com/sens
 [issues-url]: https://github.com/sensint/Servo_Haptics/issues
 [license-shield]: https://img.shields.io/github/license/sensint/Servo_Haptics.svg?style=for-the-badge
 [license-url]: https://github.com/sensint/Servo_Haptics/blob/master/LICENSE
-[banner-image]: assets/img/Banner_GasPedal.PNG
+[banner-image]: assets/img/Banner_GasPedal.png
