@@ -39,7 +39,20 @@
 
 ## About The Project
 
+![Banner images][banner-image]
 
+<!--Add a summary of the project.-->
+
+<p align="right">(<a href="#top">back to top</a>)</p>
+
+
+
+### Built With
+
+* [Teensyduino](https://www.pjrc.com/teensy/teensyduino.html)
+* [PlatformIO](https://platformio.org/)
+
+<p align="right">(<a href="#top">back to top</a>)</p>
 
 
 
@@ -88,4 +101,4 @@ Project Link: [https://github.com/sensint/Servo_Haptics](https://github.com/sens
 [issues-url]: https://github.com/sensint/Servo_Haptics/issues
 [license-shield]: https://img.shields.io/github/license/sensint/Servo_Haptics.svg?style=for-the-badge
 [license-url]: https://github.com/sensint/Servo_Haptics/blob/master/LICENSE
-[banner-image]: assets/img/banner_temp.PNG
+[banner-image]: assets/img/Banner_GasPedal.PNG
