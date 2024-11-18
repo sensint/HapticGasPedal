@@ -41,7 +41,7 @@
 
 ![Banner images][banner-image]
 
-<!--Add a summary of the project.-->
+<!--Feedback on foot pedals affects the user's ability to control dynamic systems. However, the interplay between objective performance and user's perceived control has not been formally investigated for foot pedals. Thus, we evaluated this interplay for 4 pedal configurations: rigid and compliant pedals with and without vibrotactile feedback synchronized with user action. We conducted a within-subjects study with 12 participants, consisting of (1) a one-dimensional following task, (2) a driving task in VR to measure user performance, and (3) qualitative interviews for understanding users' subjective control. The objective performance metrics showed no significant differences between the pedal configurations. In contrast, analysis of the interviews revealed that motion-coupled vibrotactile feedback increases the participants' perceived control. These results offer possibilities for designing customized pedal feedback without compromising performance. This research emphasizes evaluating objective performance as well as perceived control while assessing control strategies for existing and novel interfaces.-->
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -50,7 +50,6 @@
 ### Built With
 
 * [Teensyduino](https://www.pjrc.com/teensy/teensyduino.html)
-* [PlatformIO](https://platformio.org/)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -91,14 +90,14 @@ Project Link: [https://github.com/sensint/Servo_Haptics](https://github.com/sens
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/sensint/Servo_Haptics.svg?style=for-the-badge
-[contributors-url]: https://github.com/sensint/Servo_Haptics/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/sensint/Servo_Haptics.svg?style=for-the-badge
-[forks-url]: https://github.com/sensint/Servo_Haptics/network/members
-[stars-shield]: https://img.shields.io/github/stars/sensint/Servo_Haptics.svg?style=for-the-badge
-[stars-url]: https://github.com/sensint/Servo_Haptics/stargazers
-[issues-shield]: https://img.shields.io/github/issues/sensint/Servo_Haptics.svg?style=for-the-badge
-[issues-url]: https://github.com/sensint/Servo_Haptics/issues
-[license-shield]: https://img.shields.io/github/license/sensint/Servo_Haptics.svg?style=for-the-badge
-[license-url]: https://github.com/sensint/Servo_Haptics/blob/master/LICENSE
+[contributors-shield]: https://img.shields.io/github/contributors/sensint/HapticGasPedal.svg?style=for-the-badge
+[contributors-url]: https://github.com/sensint/HapticGasPedal/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/sensint/HapticGasPedal.svg?style=for-the-badge
+[forks-url]: https://github.com/sensint/HapticGasPedal/network/members
+[stars-shield]: https://img.shields.io/github/stars/sensint/HapticGasPedal.svg?style=for-the-badge
+[stars-url]: https://github.com/sensint/HapticGasPedal/stargazers
+[issues-shield]: https://img.shields.io/github/issues/sensint/HapticGasPedal.svg?style=for-the-badge
+[issues-url]: https://github.com/sensint/HapticGasPedal/issues
+[license-shield]: https://img.shields.io/github/license/sensint/HapticGasPedal.svg?style=for-the-badge
+[license-url]: https://github.com/sensint/HapticGasPedal/blob/master/LICENSE
 [banner-image]: assets/img/Banner_GasPedal.png
