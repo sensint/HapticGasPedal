@@ -60,6 +60,9 @@ Download the code from the GitHub website or clone repo using your favorite git-
    ```sh
    git clone https://github.com/sensint/HapticGasPedal.git
    ```
+- To run the processing script (Targetting_Task.pde) as is, please add all the trajectories in the same folder as the processing file.
+- Assign the right port for the serial communication.
+- Run the script
 
 
 ### Firmware
