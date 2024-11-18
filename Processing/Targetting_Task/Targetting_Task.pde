@@ -100,36 +100,20 @@ void setup() {
   textAlign(LEFT, TOP);
 
   // Loading the Trajectories
-  //trajectoryArrayEasy1 = loadStrings("TotalTrajectoryEasy1.csv");
-  //trajectoryArrayEasy2 = loadStrings("TotalTrajectoryEasy2.csv");
-  //trajectoryArrayEasy3 = loadStrings("TotalTrajectoryEasy3.csv");
-  //trajectoryArrayEasy4 = loadStrings("TotalTrajectoryEasy4.csv");
-
-  //trajectoryArrayMedium1 = loadStrings("TotalTrajectoryMedium1.csv");
-  //trajectoryArrayMedium2 = loadStrings("TotalTrajectoryMedium2.csv");
-  //trajectoryArrayMedium3 = loadStrings("TotalTrajectoryMedium3.csv");
-  //trajectoryArrayMedium4 = loadStrings("TotalTrajectoryMedium4.csv");
-
-  //trajectoryArrayHard1 = loadStrings("TotalTrajectoryHard1.csv");
-  //trajectoryArrayHard2 = loadStrings("TotalTrajectoryHard2.csv");
-  //trajectoryArrayHard3 = loadStrings("TotalTrajectoryHard3.csv");
-  //trajectoryArrayHard4 = loadStrings("TotalTrajectoryHard4.csv");
-  
-  // Loading the Trajectories
-  trajectoryArrayEasy1 = loadStrings("TotalTrajectoryMedium1.csv");
-  trajectoryArrayEasy2 = loadStrings("TotalTrajectoryMedium1.csv");
-  trajectoryArrayEasy3 = loadStrings("TotalTrajectoryMedium1.csv");
-  trajectoryArrayEasy4 = loadStrings("TotalTrajectoryMedium1.csv");
+  trajectoryArrayEasy1 = loadStrings("TotalTrajectoryEasy1.csv");
+  trajectoryArrayEasy2 = loadStrings("TotalTrajectoryEasy2.csv");
+  trajectoryArrayEasy3 = loadStrings("TotalTrajectoryEasy3.csv");
+  trajectoryArrayEasy4 = loadStrings("TotalTrajectoryEasy4.csv");
 
   trajectoryArrayMedium1 = loadStrings("TotalTrajectoryMedium1.csv");
-  trajectoryArrayMedium2 = loadStrings("TotalTrajectoryMedium1.csv");
-  trajectoryArrayMedium3 = loadStrings("TotalTrajectoryMedium1.csv");
-  trajectoryArrayMedium4 = loadStrings("TotalTrajectoryMedium1.csv");
+  trajectoryArrayMedium2 = loadStrings("TotalTrajectoryMedium2.csv");
+  trajectoryArrayMedium3 = loadStrings("TotalTrajectoryMedium3.csv");
+  trajectoryArrayMedium4 = loadStrings("TotalTrajectoryMedium4.csv");
 
-  trajectoryArrayHard1 = loadStrings("TotalTrajectoryMedium1.csv");
-  trajectoryArrayHard2 = loadStrings("TotalTrajectoryMedium1.csv");
-  trajectoryArrayHard3 = loadStrings("TotalTrajectoryMedium1.csv");
-  trajectoryArrayHard4 = loadStrings("TotalTrajectoryMedium1.csv");
+  trajectoryArrayHard1 = loadStrings("TotalTrajectoryHard1.csv");
+  trajectoryArrayHard2 = loadStrings("TotalTrajectoryHard2.csv");
+  trajectoryArrayHard3 = loadStrings("TotalTrajectoryHard3.csv");
+  trajectoryArrayHard4 = loadStrings("TotalTrajectoryHard4.csv");
 
   String[] portList = Serial.list();
   //println(portList[0], portList[1]);
@@ -143,7 +127,7 @@ void setup() {
       resetGame();    // Initialize the game
     }
     catch (Exception e) {
-      //println("Failed to connect to serial port: " + portName);
+      println("Failed to connect to serial port: " + portName);
     }
   } else {
     println("No serial ports available.");
