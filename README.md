@@ -26,7 +26,7 @@
 <h3 align="center">Foot Pedal Control - The Role of Vibrotactile Feedback in Performance and Perceived Control</h3>
 
   <p align="center">
-    <b>We'd love to get your feedback and know if you want to explore this research further.A</b>
+    <b>We'd love to get your feedback and know if you want to explore this research further.</b>
     <br />
 <!--     <br />
     <a href="https://github.com/sensint/Servo_Haptics/issues">Report Bug</a>
@@ -53,6 +53,32 @@ Feedback on foot pedals affects the user's ability to control dynamic systems. H
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
+## Getting Started
+
+Download the code from the GitHub website or clone repo using your favorite git-client software or with the following command:
+
+   ```sh
+   git clone https://github.com/sensint/HapticGasPedal.git
+   ```
+
+
+### Firmware
+
+We provide the firmware for two build systems - Teensyduino (based on Arduino IDE) and PlatformIO.
+
+The firmware was tested with the following microcontrollers:
+
+- Teensy 4.1
+
+
+
+#### Teensyduino
+
+The easiest way to get up and running with the firmware is Teensyduino.
+
+##### Prerequisites
+
+Download and install the [Teensyduino](https://www.pjrc.com/teensy/td_download.html) software for your operating system. All needed libraries are included in the basic installation.
 
 
 ## License
@@ -63,13 +89,11 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 
 
-
-
 ## Contact
 
 Sensorimotor Interaction Group - [website](https://sensint.mpi-inf.mpg.de/) - [@sensintgroup](https://twitter.com/sensintgroup)
 
-Project Link: [https://github.com/sensint/Servo_Haptics](https://github.com/sensint/Servo_Haptics)
+Project Link: [https://github.com/sensint/Servo_Haptics](https://github.com/sensint/HapticGasPedal)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
