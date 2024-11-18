@@ -23,11 +23,9 @@
     <img src="assets/img/sensint_logo.png" alt="Logo" width="121" height="100">
   </a>
 
-<h3 align="center">Foot Pedal Control - Embodied Vibrotactile Feedback</h3>
+<h3 align="center">Foot Pedal Control - The Role of Vibrotactile Feedback in Performance and Perceived Control</h3>
 
   <p align="center">
-    The Role of Vibrotactile Feedback in Performance and Perceived Control
-    <br />
     <b>We'd love to get your feedback and know if you want to explore this research further.A</b>
     <br />
 <!--     <br />
