@@ -67,7 +67,7 @@ Download the code from the GitHub website or clone repo using your favorite git-
 
 ### Firmware
 
-We provide the firmware for two build systems - Teensyduino (based on Arduino IDE) and PlatformIO.
+We provide the firmware for one build system - Teensyduino (based on Arduino IDE).
 
 The firmware was tested with the following microcontrollers:
 
@@ -86,7 +86,7 @@ Download and install the [Teensyduino](https://www.pjrc.com/teensy/td_download.h
 
 ### Hardware
 
-This project is based on the Teensy microcontroller and the [PT8211 Audio Kit](https://www.pjrc.com/store/pt8211_kit.html).
+This project is based on the Teensy microcontroller and the [PT8211 Audio Kit](https://www.pjrc.com/store/pt8211_kit.html). For setting up the parts of the hardware, please refer to [Haptic Servos](https://dl.acm.org/doi/full/10.1145/3544548.3580716).
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
