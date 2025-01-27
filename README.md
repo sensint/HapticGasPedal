@@ -29,9 +29,9 @@
     <b>We'd love to get your feedback and know if you want to explore this research further.</b>
     <br />
 <!--     <br />
-    <a href="https://github.com/sensint/Servo_Haptics/issues">Report Bug</a>
+    <a href="https://github.com/sensint/HapticGasPedal/issues">Report Bug</a>
     ·
-    <a href="https://github.com/sensint/Servo_Haptics/issues">Request Feature</a> -->
+    <a href="https://github.com/sensint/HapticGasPedal/issues">Request Feature</a> -->
   </p>
 </div>
 
